@@ -264,7 +264,7 @@ export function ProjectAnalyticsView() {
                 <Clock className="h-6 w-6 text-yellow-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">In Transit</p>
+                <p className="text-sm text-gray-600">In backorders</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {analytics.overall_transit.toFixed(1)}%
                 </p>
@@ -284,7 +284,7 @@ export function ProjectAnalyticsView() {
                 <Package className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Invoiced</p>
+                <p className="text-sm text-gray-600">In transit</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {analytics.overall_invoiced.toFixed(1)}%
                 </p>
@@ -362,13 +362,13 @@ export function ProjectAnalyticsView() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">In Transit</p>
+                    <p className="text-sm text-gray-600">In backorders</p>
                     <p className="text-lg font-semibold text-yellow-600">
                       {machine.transit_percentage.toFixed(1)}%
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Invoiced</p>
+                    <p className="text-sm text-gray-600">In transit</p>
                     <p className="text-lg font-semibold text-purple-600">
                       {machine.invoiced_percentage.toFixed(1)}%
                     </p>
@@ -412,8 +412,8 @@ export function ProjectAnalyticsView() {
                         <th className="px-4 py-3 text-center font-medium text-gray-700">Required</th>
                         <th className="px-4 py-3 text-center font-medium text-gray-700">Available</th>
                         <th className="px-4 py-3 text-center font-medium text-gray-700">Used</th>
-                        <th className="px-4 py-3 text-center font-medium text-gray-700">Transit</th>
-                        <th className="px-4 py-3 text-center font-medium text-gray-700">Invoiced</th>
+                        <th className="px-4 py-3 text-center font-medium text-gray-700">Backorders</th>
+                        <th className="px-4 py-3 text-center font-medium text-gray-700">In transit</th>
                         <th className="px-4 py-3 text-center font-medium text-gray-700">Missing</th>
                         <th className="px-4 py-3 text-center font-medium text-gray-700">Latest ETA</th>
                         <th className="px-4 py-3 text-center font-medium text-gray-700">Status</th>

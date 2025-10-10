@@ -336,7 +336,7 @@ export function ProjectComparativeDashboard() {
               </div>
             </div>
             <div>
-              <p className="text-sm text-gray-600 mb-1">En transit</p>
+              <p className="text-sm text-gray-600 mb-1">In backorders</p>
               <p className="text-2xl font-bold text-yellow-600">{analytics.overall_transit.toFixed(1)}%</p>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                 <div
@@ -346,7 +346,7 @@ export function ProjectComparativeDashboard() {
               </div>
             </div>
             <div>
-              <p className="text-sm text-gray-600 mb-1">Invoiced</p>
+              <p className="text-sm text-gray-600 mb-1">In transit</p>
               <p className="text-2xl font-bold text-purple-600">{analytics.overall_invoiced.toFixed(1)}%</p>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                 <div
@@ -388,8 +388,8 @@ export function ProjectComparativeDashboard() {
               >
                 <option value="availability">Availability</option>
                 <option value="usage">Usage</option>
-                <option value="transit">In Transit</option>
-                <option value="invoiced">Invoiced</option>
+                <option value="transit">In backorders</option>
+                <option value="invoiced">In transit</option>
                 <option value="missing">Missing</option>
               </select>
             </div>
@@ -489,7 +489,7 @@ export function ProjectComparativeDashboard() {
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs text-gray-600">En transit</p>
+                      <p className="text-xs text-gray-600">In backorders</p>
                       <p className="text-sm font-semibold text-yellow-600">
                         {machineAnalytics.transit_percentage.toFixed(1)}%
                       </p>

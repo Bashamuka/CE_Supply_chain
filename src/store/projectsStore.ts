@@ -183,6 +183,9 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
         .single();
 
       if (error) throw error;
+
+      await supabase.rpc('refresh_project_analytics_views');
+
       set({ isLoading: false });
       await get().fetchMachines(machine.project_id);
       return data;
@@ -201,6 +204,8 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
         .eq('id', id);
 
       if (error) throw error;
+
+      await supabase.rpc('refresh_project_analytics_views');
 
       const machine = get().machines.find(m => m.id === id);
       if (machine) {
@@ -222,6 +227,8 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
         .eq('id', id);
 
       if (error) throw error;
+
+      await supabase.rpc('refresh_project_analytics_views');
 
       if (machine) {
         await get().fetchMachines(machine.project_id);
@@ -258,6 +265,9 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
         .single();
 
       if (error) throw error;
+
+      await supabase.rpc('refresh_project_analytics_views');
+
       set({ isLoading: false });
       await get().fetchMachineOrderNumbers(orderNumber.machine_id);
       return data;
@@ -277,6 +287,8 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
         .eq('id', id);
 
       if (error) throw error;
+
+      await supabase.rpc('refresh_project_analytics_views');
 
       if (orderNumber) {
         await get().fetchMachineOrderNumbers(orderNumber.machine_id);
@@ -313,6 +325,9 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
         .single();
 
       if (error) throw error;
+
+      await supabase.rpc('refresh_project_analytics_views');
+
       set({ isLoading: false });
       await get().fetchMachineParts(part.machine_id);
       return data;
@@ -331,6 +346,8 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
         .eq('id', id);
 
       if (error) throw error;
+
+      await supabase.rpc('refresh_project_analytics_views');
 
       const part = get().machineParts.find(p => p.id === id);
       if (part) {
@@ -352,6 +369,8 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
         .eq('id', id);
 
       if (error) throw error;
+
+      await supabase.rpc('refresh_project_analytics_views');
 
       if (part) {
         await get().fetchMachineParts(part.machine_id);

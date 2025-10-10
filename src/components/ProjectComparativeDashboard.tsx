@@ -161,15 +161,15 @@ export function ProjectComparativeDashboard() {
   const delayedMachines = filteredMachines.filter(m => getMachineStatus(m) === 'delayed').length;
   const onTimePercentage = filteredMachines.length > 0 ? (onTimeMachines / filteredMachines.length) * 100 : 0;
 
-  const mostAdvancedMachine = analytics.machines.reduce((prev, current) =>
+  const mostAdvancedMachine = analytics.machines.length > 0 ? analytics.machines.reduce((prev, current) =>
     (current.usage_percentage > prev.usage_percentage) ? current : prev
-  , analytics.machines[0]);
+  , analytics.machines[0]) : null;
 
-  const mostDelayedMachineData = filteredMachines.reduce((prev, current) => {
+  const mostDelayedMachineData = filteredMachines.length > 0 ? filteredMachines.reduce((prev, current) => {
     const prevDelay = calculateDelayInDays(prev);
     const currentDelay = calculateDelayInDays(current);
     return currentDelay > prevDelay ? current : prev;
-  }, filteredMachines[0]);
+  }, filteredMachines[0]) : null;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -250,49 +250,65 @@ export function ProjectComparativeDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Most Advanced Machine</h3>
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="font-medium text-gray-900">{mostAdvancedMachine.machine_name}</p>
-                <p className="text-sm text-gray-500">{mostAdvancedMachine.total_parts} parts</p>
+            {mostAdvancedMachine ? (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="font-medium text-gray-900">{mostAdvancedMachine.machine_name}</p>
+                    <p className="text-sm text-gray-500">{mostAdvancedMachine.total_parts} parts</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-green-600" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Usage</span>
+                    <span className="font-semibold text-green-600">{mostAdvancedMachine.usage_percentage.toFixed(1)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-green-600 h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min(mostAdvancedMachine.usage_percentage, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>No data available</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-green-600" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Usage</span>
-                <span className="font-semibold text-green-600">{mostAdvancedMachine.usage_percentage.toFixed(1)}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-green-600 h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min(mostAdvancedMachine.usage_percentage, 100)}%` }}
-                />
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Most Delayed Machine</h3>
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="font-medium text-gray-900">{mostDelayedMachineData?.name || 'N/A'}</p>
-                <p className="text-sm text-gray-500">
-                  {mostDelayedMachineData?.end_date
-                    ? `Deadline: ${new Date(mostDelayedMachineData.end_date).toLocaleDateString('en-US')}`
-                    : 'No date defined'
-                  }
-                </p>
+            {mostDelayedMachineData ? (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="font-medium text-gray-900">{mostDelayedMachineData.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {mostDelayedMachineData.end_date
+                        ? `Deadline: ${new Date(mostDelayedMachineData.end_date).toLocaleDateString('en-US')}`
+                        : 'No date defined'
+                      }
+                    </p>
+                  </div>
+                  <TrendingDown className="h-8 w-8 text-red-600" />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Delay</span>
+                    <span className="font-semibold text-red-600">
+                      {calculateDelayInDays(mostDelayedMachineData)} day(s)
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p>No delayed machines</p>
               </div>
-              <TrendingDown className="h-8 w-8 text-red-600" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Delay</span>
-                <span className="font-semibold text-red-600">
-                  {calculateDelayInDays(mostDelayedMachineData)} day(s)
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -380,7 +396,14 @@ export function ProjectComparativeDashboard() {
           </div>
 
           <div className="space-y-4">
-            {filteredMachines.map(machine => {
+            {filteredMachines.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p className="text-lg font-medium">No machines match the selected filter</p>
+                <p className="text-sm mt-1">Try selecting a different filter option</p>
+              </div>
+            ) : (
+              filteredMachines.map(machine => {
               const machineAnalytics = analytics.machines.find(m => m.machine_id === machine.id);
               if (!machineAnalytics) return null;
 
@@ -480,7 +503,8 @@ export function ProjectComparativeDashboard() {
                   </div>
                 </div>
               );
-            })}
+            })
+            )}
           </div>
         </div>
       </div>

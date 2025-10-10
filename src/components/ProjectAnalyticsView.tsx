@@ -64,38 +64,91 @@ export function ProjectAnalyticsView() {
 
     const workbook = XLSX.utils.book_new();
 
+    const catYellow = 'FFCD00';
+    const catBlack = '000000';
+    const white = 'FFFFFF';
+    const lightGray = 'F5F5F5';
+
     const summaryData = [
-      ['Project', analytics.project_name],
-      ['Total machines', analytics.total_machines],
+      ['Project Analysis Report'],
       [''],
-      ['Global Statistics'],
-      ['Overall Availability', `${analytics.overall_availability.toFixed(2)}%`],
-      ['Overall Usage', `${analytics.overall_usage.toFixed(2)}%`],
-      ['Overall In Transit', `${analytics.overall_transit.toFixed(2)}%`],
-      ['Overall Invoiced', `${analytics.overall_invoiced.toFixed(2)}%`],
-      ['Overall Missing', `${analytics.overall_missing.toFixed(2)}%`]
+      ['Project Name', analytics.project_name],
+      ['Total Machines', analytics.total_machines],
+      ['Export Date', new Date().toLocaleDateString()],
+      [''],
+      ['Global Statistics', ''],
+      ['Metric', 'Percentage'],
+      ['Overall Availability', analytics.overall_availability.toFixed(2)],
+      ['Overall Usage', analytics.overall_usage.toFixed(2)],
+      ['Overall In Backorders', analytics.overall_transit.toFixed(2)],
+      ['Overall In Transit', analytics.overall_invoiced.toFixed(2)],
+      ['Overall Missing', analytics.overall_missing.toFixed(2)]
     ];
 
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+
+    summarySheet['!cols'] = [{ wch: 25 }, { wch: 20 }];
+
+    summarySheet['A1'].s = {
+      font: { bold: true, sz: 16, color: { rgb: white } },
+      fill: { fgColor: { rgb: catBlack } },
+      alignment: { horizontal: 'center', vertical: 'center' }
+    };
+    if (summarySheet['B1']) {
+      summarySheet['B1'].s = {
+        fill: { fgColor: { rgb: catBlack } }
+      };
+    }
+
+    ['A7', 'B7'].forEach(cell => {
+      if (summarySheet[cell]) {
+        summarySheet[cell].s = {
+          font: { bold: true, sz: 12, color: { rgb: catBlack } },
+          fill: { fgColor: { rgb: catYellow } },
+          alignment: { horizontal: 'center', vertical: 'center' }
+        };
+      }
+    });
+
+    ['A8', 'B8'].forEach(cell => {
+      if (summarySheet[cell]) {
+        summarySheet[cell].s = {
+          font: { bold: true, color: { rgb: white } },
+          fill: { fgColor: { rgb: catBlack } },
+          alignment: { horizontal: 'center', vertical: 'center' }
+        };
+      }
+    });
+
+    if (!summarySheet['!merges']) summarySheet['!merges'] = [];
+    summarySheet['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } });
+    summarySheet['!merges'].push({ s: { r: 6, c: 0 }, e: { r: 6, c: 1 } });
+
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
-    analytics.machines.forEach((machine, index) => {
+    analytics.machines.forEach((machine) => {
       const machineData = [
-        ['Machine', machine.machine_name],
-        ['Total parts', machine.total_parts],
-        ['Availability', `${machine.availability_percentage.toFixed(2)}%`],
-        ['Usage', `${machine.usage_percentage.toFixed(2)}%`],
-        ['In Transit', `${machine.transit_percentage.toFixed(2)}%`],
-        ['Invoiced', `${machine.invoiced_percentage.toFixed(2)}%`],
-        ['Missing', `${machine.missing_percentage.toFixed(2)}%`],
+        ['Machine Information'],
         [''],
-        ['Part Number', 'Description', 'Qty Required', 'Qty Available', 'Qty Used', 'Qty In Transit', 'Qty Invoiced', 'Qty Missing', 'Latest ETA']
+        ['Machine Name', machine.machine_name],
+        ['Total Parts', machine.total_parts],
+        [''],
+        ['Performance Metrics', ''],
+        ['Metric', 'Percentage'],
+        ['Availability', machine.availability_percentage.toFixed(2)],
+        ['Usage', machine.usage_percentage.toFixed(2)],
+        ['In Backorders', machine.transit_percentage.toFixed(2)],
+        ['In Transit', machine.invoiced_percentage.toFixed(2)],
+        ['Missing', machine.missing_percentage.toFixed(2)],
+        [''],
+        ['Parts Details'],
+        ['Part Number', 'Description', 'Qty Required', 'Qty Available', 'Qty Used', 'Qty Backorders', 'Qty In Transit', 'Qty Missing', 'Latest ETA']
       ];
 
       machine.parts_details.forEach(part => {
         machineData.push([
           part.part_number,
-          part.description,
+          part.description || '-',
           part.quantity_required,
           part.quantity_available,
           part.quantity_used,
@@ -107,7 +160,94 @@ export function ProjectAnalyticsView() {
       });
 
       const machineSheet = XLSX.utils.aoa_to_sheet(machineData);
-      XLSX.utils.book_append_sheet(workbook, machineSheet, `Machine ${index + 1}`);
+
+      machineSheet['!cols'] = [
+        { wch: 18 },
+        { wch: 35 },
+        { wch: 13 },
+        { wch: 13 },
+        { wch: 13 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 13 },
+        { wch: 15 }
+      ];
+
+      machineSheet['A1'].s = {
+        font: { bold: true, sz: 14, color: { rgb: white } },
+        fill: { fgColor: { rgb: catBlack } },
+        alignment: { horizontal: 'center', vertical: 'center' }
+      };
+      if (machineSheet['B1']) {
+        machineSheet['B1'].s = {
+          fill: { fgColor: { rgb: catBlack } }
+        };
+      }
+
+      ['A6', 'B6'].forEach(cell => {
+        if (machineSheet[cell]) {
+          machineSheet[cell].s = {
+            font: { bold: true, sz: 12, color: { rgb: catBlack } },
+            fill: { fgColor: { rgb: catYellow } },
+            alignment: { horizontal: 'center', vertical: 'center' }
+          };
+        }
+      });
+
+      ['A7', 'B7'].forEach(cell => {
+        if (machineSheet[cell]) {
+          machineSheet[cell].s = {
+            font: { bold: true, color: { rgb: white } },
+            fill: { fgColor: { rgb: catBlack } },
+            alignment: { horizontal: 'center', vertical: 'center' }
+          };
+        }
+      });
+
+      machineSheet['A14'].s = {
+        font: { bold: true, sz: 12, color: { rgb: catBlack } },
+        fill: { fgColor: { rgb: catYellow } },
+        alignment: { horizontal: 'center', vertical: 'center' }
+      };
+      for (let i = 1; i < 9; i++) {
+        const cell = XLSX.utils.encode_cell({ r: 13, c: i });
+        if (machineSheet[cell]) {
+          machineSheet[cell].s = {
+            fill: { fgColor: { rgb: catYellow } }
+          };
+        }
+      }
+
+      ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].forEach(col => {
+        const cell = col + '15';
+        if (machineSheet[cell]) {
+          machineSheet[cell].s = {
+            font: { bold: true, color: { rgb: white } },
+            fill: { fgColor: { rgb: catBlack } },
+            alignment: { horizontal: 'center', vertical: 'center' }
+          };
+        }
+      });
+
+      for (let i = 15; i < 15 + machine.parts_details.length; i++) {
+        ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].forEach((col, idx) => {
+          const cell = col + (i + 1);
+          if (machineSheet[cell]) {
+            machineSheet[cell].s = {
+              fill: { fgColor: { rgb: i % 2 === 0 ? white : lightGray } },
+              alignment: { horizontal: idx === 1 ? 'left' : 'center', vertical: 'center' }
+            };
+          }
+        });
+      }
+
+      if (!machineSheet['!merges']) machineSheet['!merges'] = [];
+      machineSheet['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } });
+      machineSheet['!merges'].push({ s: { r: 5, c: 0 }, e: { r: 5, c: 1 } });
+      machineSheet['!merges'].push({ s: { r: 13, c: 0 }, e: { r: 13, c: 8 } });
+
+      let sheetName = machine.machine_name.replace(/[:\\\/\?\*\[\]]/g, '-').substring(0, 31);
+      XLSX.utils.book_append_sheet(workbook, machineSheet, sheetName);
     });
 
     XLSX.writeFile(workbook, `analyse-projet-${analytics.project_name}-${new Date().toISOString().split('T')[0]}.xlsx`);

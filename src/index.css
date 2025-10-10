@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Palette de couleurs Caterpillar */
+  --cat-yellow: #FFCD11;
+  --cat-black: #1A1A1A;
+  --cat-gray: #666666;
+  --cat-light-gray: #F5F5F5;
+  --cat-white: #FFFFFF;
+  --cat-yellow-hover: #FFD84D;
+  --cat-yellow-light: #FFF3CC;
+  --cat-red: #FF4136;
+  --cat-green: #2ECC40;
+}
+
+/* Base styles */
+body {
+  @apply bg-gradient-to-br from-[#F5F5F5] to-white text-[#1A1A1A];
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Messages de chat */
+.chat-message-user {
+  background: linear-gradient(135deg, var(--cat-black) 0%, #333333 100%);
+  @apply text-white shadow-lg transform transition-all duration-200;
+}
+
+.chat-message-assistant {
+  background: linear-gradient(135deg, var(--cat-white) 0%, var(--cat-light-gray) 100%);
+  border: 1px solid #E5E5E5;
+  @apply shadow-md transform transition-all duration-200;
+}
+
+/* Boutons */
+.cat-button {
+  @apply bg-[#FFCD11] text-black font-bold px-3 py-2 sm:px-6 sm:py-3 rounded-lg 
+         hover:bg-[#FFD84D] transition-all duration-200
+         disabled:opacity-50 disabled:cursor-not-allowed
+         shadow-md hover:shadow-lg transform hover:-translate-y-0.5
+         focus:outline-none focus:ring-2 focus:ring-[#FFCD11] focus:ring-opacity-50
+         text-sm sm:text-base;
+}
+
+/* Champs de saisie */
+.cat-input {
+  @apply border-2 border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3
+         focus:border-[#FFCD11] focus:ring-2 focus:ring-[#FFCD11]
+         focus:ring-opacity-50 transition-all duration-200
+         placeholder:text-gray-400 bg-white shadow-sm
+         text-sm sm:text-base w-full;
+}
+
+/* Status indicators */
+.status-pending {
+  @apply bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium inline-block;
+}
+
+.status-completed {
+  @apply bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium inline-block;
+}
+
+.status-delayed {
+  @apply bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium inline-block;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Pagination */
+.pagination-button {
+  @apply p-1.5 sm:p-2 rounded-lg transition-all duration-200
+         hover:bg-[#FFCD11] hover:text-black disabled:opacity-50
+         disabled:hover:bg-transparent focus:outline-none
+         focus:ring-2 focus:ring-[#FFCD11] focus:ring-opacity-50;
+}
+
+/* Scrollbar styling */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-gray-400::-webkit-scrollbar-thumb {
+  background-color: #9CA3AF;
+  border-radius: 0.25rem;
+}
+
+.scrollbar-track-gray-100::-webkit-scrollbar-track {
+  background-color: #F3F4F6;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cat-light-gray);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cat-gray);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cat-black);
+}
+
+/* Loading states */
+.loading-overlay {
+  @apply absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center;
+}
+
+.loading-spinner {
+  @apply animate-spin text-[#FFCD11];
+}
+
+/* Responsive table */
+@media (max-width: 640px) {
+  .table-container {
+    @apply -mx-4;
+  }
+  
+  .table-scroll-hint {
+    @apply text-xs;
+  }
+  
+  .pagination-info {
+    @apply text-xs;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+  .cat-button:hover {
+    transform: none;
+  }
+  
+  .hover\:scale-110:hover {
+    transform: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none;
+  }
+  
+  .print-break-inside-avoid {
+    break-inside: avoid;
+  }
+}

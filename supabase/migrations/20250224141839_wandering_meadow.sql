@@ -1,0 +1,2 @@
+-- Cette migration a été fusionnée avec turquoise_violet
+-- Aucune action nécessaire car les colonnes ont déjà été ajoutées

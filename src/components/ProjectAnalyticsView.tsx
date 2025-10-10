@@ -151,6 +151,35 @@ export function ProjectAnalyticsView() {
     );
   }
 
+  if (analytics.machines.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <Link
+            to={`/projects/${projectId}`}
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back to Project
+          </Link>
+          <div className="bg-white rounded-lg shadow p-12 text-center">
+            <Package className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Machines Found</h2>
+            <p className="text-gray-600 mb-6">
+              This project doesn't have any machines yet. Add machines to view analytics.
+            </p>
+            <Link
+              to={`/projects/${projectId}`}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Go to Project Details
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">

@@ -37,11 +37,19 @@ export function ProjectAnalyticsView() {
   const [refreshMessage, setRefreshMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    if (projectId) {
-      fetchProjectById(projectId);
-      calculateProjectAnalytics(projectId);
-    }
-  }, [projectId, fetchProjectById, calculateProjectAnalytics]);
+    const loadAnalytics = async () => {
+      if (projectId) {
+        fetchProjectById(projectId);
+        try {
+          await refreshAnalyticsViews();
+        } catch (error) {
+          console.error('Failed to refresh views on load:', error);
+        }
+        await calculateProjectAnalytics(projectId);
+      }
+    };
+    loadAnalytics();
+  }, [projectId, fetchProjectById, calculateProjectAnalytics, refreshAnalyticsViews]);
 
   useEffect(() => {
     if (analytics && analytics.machines.length > 0 && !selectedMachineId) {

@@ -34,6 +34,7 @@ export function ProjectAnalyticsView() {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedMachineId, setSelectedMachineId] = useState<string | null>(null);
+  const [refreshMessage, setRefreshMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     if (projectId) {
@@ -48,12 +49,23 @@ export function ProjectAnalyticsView() {
     }
   }, [analytics, selectedMachineId]);
 
+  useEffect(() => {
+    if (refreshMessage) {
+      const timer = setTimeout(() => setRefreshMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [refreshMessage]);
+
   const handleRefreshData = async () => {
     if (!projectId) return;
     setIsRefreshing(true);
+    setRefreshMessage(null);
     try {
       await refreshAnalyticsViews();
       await calculateProjectAnalytics(projectId);
+      setRefreshMessage({ type: 'success', text: 'Data refreshed successfully!' });
+    } catch (error) {
+      setRefreshMessage({ type: 'error', text: 'Failed to refresh data. Please try again.' });
     } finally {
       setIsRefreshing(false);
     }
@@ -355,6 +367,23 @@ export function ProjectAnalyticsView() {
               </button>
             </div>
           </div>
+
+          {refreshMessage && (
+            <div className={`mt-4 p-4 rounded-lg ${
+              refreshMessage.type === 'success'
+                ? 'bg-green-50 border border-green-200 text-green-800'
+                : 'bg-red-50 border border-red-200 text-red-800'
+            }`}>
+              <div className="flex items-center gap-2">
+                {refreshMessage.type === 'success' ? (
+                  <CheckCircle className="h-5 w-5" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5" />
+                )}
+                <span className="font-medium">{refreshMessage.text}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">

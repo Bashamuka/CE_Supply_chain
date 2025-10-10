@@ -493,9 +493,11 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
 
   refreshAnalyticsViews: async () => {
     try {
-      await supabase.rpc('refresh_project_analytics_views');
+      const { error } = await supabase.rpc('refresh_project_analytics_views');
+      if (error) throw error;
     } catch (error) {
       console.error('Error refreshing analytics views:', error);
+      throw error;
     }
   },
 

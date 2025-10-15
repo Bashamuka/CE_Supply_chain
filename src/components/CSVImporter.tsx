@@ -75,6 +75,17 @@ export function CSVImporter({
   const BATCH_SIZE = 1000;
   const CHUNK_SIZE = 1024 * 1024;
 
+  // Déduplique un lot pour stock_dispo par part_number (dernier en entrée gagne)
+  const deduplicateStockDispo = (rows: Record<string, any>[]) => {
+    const byPartNumber = new Map<string, Record<string, any>>();
+    for (const row of rows) {
+      const key = (row.part_number ?? '').toString().toUpperCase().trim();
+      if (!key) continue;
+      byPartNumber.set(key, { ...row, part_number: key });
+    }
+    return Array.from(byPartNumber.values());
+  };
+
   const formatDuration = (ms: number): string => {
     if (ms < 1000) return `${Math.floor(ms)}ms`;
     const seconds = Math.floor(ms / 1000);
@@ -183,7 +194,12 @@ export function CSVImporter({
         else if (header.startsWith('qté_') || header.startsWith('qte_') || header.includes('quantity') || header.includes('qty_')) {
           record[header] = value ? parseFloat(value.replace(/\s/g, '')) || 0 : 0;
         } else {
-          record[header] = value;
+          // Normalisation spécifique pour stock_dispo: part_number unique et sans casse/espaces
+          if (tableName === 'stock_dispo' && header === 'part_number') {
+            record[header] = value ? value.toUpperCase().trim() : value;
+          } else {
+            record[header] = value;
+          }
         }
       });
       
@@ -312,9 +328,13 @@ export function CSVImporter({
           const batch = currentBatch.splice(0, BATCH_SIZE);
           batchNumber++;
 
+          const payload = tableName === 'stock_dispo' ? deduplicateStockDispo(batch) : batch;
           const { error: insertError } = await supabase
             .from(tableName)
-            .insert(batch);
+            .upsert(payload, {
+              onConflict: tableName === 'stock_dispo' ? 'part_number' : undefined,
+              ignoreDuplicates: tableName !== 'stock_dispo'
+            });
 
           if (insertError) {
             console.error('Insert error:', insertError);
@@ -333,9 +353,13 @@ export function CSVImporter({
       }
 
       if (currentBatch.length > 0) {
+        const payload = tableName === 'stock_dispo' ? deduplicateStockDispo(currentBatch) : currentBatch;
         const { error: insertError } = await supabase
           .from(tableName)
-          .insert(currentBatch);
+          .upsert(payload, {
+            onConflict: tableName === 'stock_dispo' ? 'part_number' : undefined,
+            ignoreDuplicates: tableName !== 'stock_dispo'
+          });
 
         if (insertError) {
           console.error('Final insert error:', insertError);

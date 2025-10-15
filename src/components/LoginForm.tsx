@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useUserStore } from '../store/userStore';
+import { SupabaseDiagnostic } from './SupabaseDiagnostic';
 import { AlertCircle, Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export function LoginForm() {
@@ -125,6 +126,11 @@ export function LoginForm() {
           </div>
           <span className="text-gray-900 text-2xl font-bold">CE-Parts Supply Chain Hub</span>
         </div>
+      </div>
+
+      {/* Diagnostic Component */}
+      <div className="mb-6">
+        <SupabaseDiagnostic />
       </div>
 
       {/* Welcome Text */}

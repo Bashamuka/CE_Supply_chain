@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { useAdminStore } from '../store/adminStore';
 import { useProjectsStore } from '../store/projectsStore';
 import { useUserStore } from '../store/userStore';
+import { supabase } from '../lib/supabase';
+import { AdminDiagnostic } from './AdminDiagnostic';
 import type { UserProfile, ModuleName } from '../types';
 
 const MODULES: { name: ModuleName; label: string }[] = [
@@ -188,6 +190,10 @@ export default function AdminInterface() {
     setSaveError(null);
 
     try {
+      console.log('=== SAVING CHANGES ===');
+      console.log('Selected user:', selectedUser?.email);
+      console.log('Module access changes:', userModuleAccess);
+
       const modulePromises = Object.entries(userModuleAccess).map(([moduleName, hasAccess]) =>
         setModuleAccess(selectedUser.id, moduleName as ModuleName, hasAccess)
       );
@@ -207,10 +213,23 @@ export default function AdminInterface() {
       setHasUnsavedChanges(false);
       setSaveSuccess(true);
 
+      console.log('✅ All changes saved successfully');
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
       console.error('Failed to save changes:', error);
-      setSaveError(error.message || 'Erreur lors de la sauvegarde des modifications');
+      let errorMessage = 'Erreur lors de la sauvegarde des modifications';
+      
+      if (error.message) {
+        if (error.message.includes('Database error')) {
+          errorMessage = `Erreur de base de données: ${error.message.replace('Database error: ', '')}`;
+        } else if (error.message.includes('constraint')) {
+          errorMessage = 'Erreur de contrainte de base de données. Veuillez vérifier que tous les modules sont correctement configurés.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setSaveError(errorMessage);
       setTimeout(() => setSaveError(null), 5000);
     } finally {
       setSavingChanges(false);
@@ -236,9 +255,9 @@ export default function AdminInterface() {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <Lock className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Accès Refusé</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h2>
           <p className="text-gray-600">
-            Vous n'avez pas les droits nécessaires pour accéder à cette section.
+            You don't have the necessary permissions to access this section.
           </p>
         </div>
       </div>
@@ -255,13 +274,13 @@ export default function AdminInterface() {
               className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span>Retour</span>
+              <span>Back</span>
             </Link>
             <div className="flex items-center space-x-3">
               <Shield className="w-8 h-8 text-blue-600" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">Administration</h1>
-                <p className="text-sm text-gray-600">Gestion des utilisateurs et permissions</p>
+                <p className="text-sm text-gray-600">User and permissions management</p>
               </div>
             </div>
           </div>
@@ -270,9 +289,14 @@ export default function AdminInterface() {
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <UserPlus className="w-5 h-5" />
-            <span>Nouvel Utilisateur</span>
+            <span>New User</span>
           </button>
         </div>
+      </div>
+
+      {/* Diagnostic Component */}
+      <div className="px-6 py-4">
+        <AdminDiagnostic />
       </div>
 
       {error && (

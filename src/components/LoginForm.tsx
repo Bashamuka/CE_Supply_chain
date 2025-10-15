@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useUserStore } from '../store/userStore';
-import { AlertCircle, Package2, Loader2, Mail, Lock, Eye, EyeOff, Radar, ArrowRight } from 'lucide-react';
+import { AlertCircle, Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -117,34 +116,24 @@ export function LoginForm() {
   };
 
   return (
-    <div className="w-full">
-      <div className="text-center mb-3">
-        <div className="relative inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 mb-4 group">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1A1A1A] to-[#333333] rounded-2xl transform rotate-3 transition-transform group-hover:rotate-6"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1A1A1A] to-[#333333] rounded-2xl">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#FFCD11] to-[#FFE066] opacity-0 group-hover:opacity-20 transition-opacity"></div>
+    <div className="w-full h-full flex flex-col justify-center">
+      {/* CE-Parts Logo */}
+      <div className="mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-[#FFCD11] rounded-lg flex items-center justify-center">
+            <div className="w-6 h-6 bg-black rounded-sm"></div>
           </div>
-          <div className="relative transform transition-transform group-hover:scale-110">
-            <div className="relative w-8 h-8 sm:w-10 sm:h-10">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Package2 className="h-6 w-6 sm:h-8 sm:w-8 text-[#FFCD11]" />
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center animate-ping opacity-75">
-                <Radar className="h-8 w-8 sm:h-10 sm:w-10 text-[#FFCD11] opacity-20" />
-              </div>
-              <div className="absolute -right-1 -bottom-1">
-                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 text-[#FFCD11]" />
-              </div>
-            </div>
-          </div>
+          <span className="text-gray-900 text-2xl font-bold">CE-Parts Supply Chain Hub</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] mb-2 tracking-tight">
-          CE-Parts Supply Chain Hub
-        </h1>
-        <p className="text-[#666666] text-sm">Powered by Congo Equipment®</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3 py-4 px-6 rounded-2xl">
+      {/* Welcome Text */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h1>
+        <p className="text-gray-600">Sign in to your account</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-xl animate-fadeIn">
             <div className="flex items-center">
@@ -154,8 +143,9 @@ export function LoginForm() {
           </div>
         )}
 
+
         <div className="space-y-2">
-          <label htmlFor="email" className="block text-base font-medium text-[#1A1A1A]">
+          <label htmlFor="email" className="block text-base font-medium text-gray-900">
             Email address
           </label>
           <div className="relative">
@@ -169,11 +159,11 @@ export function LoginForm() {
                 setEmail(e.target.value);
                 handleInputChange();
               }}
-              className="w-full pl-10 sm:pl-12 pr-4 py-3 rounded-xl border border-gray-300 
+              className="w-full pl-10 sm:pl-12 pr-4 py-3 rounded-lg border border-gray-300 
                        focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11] 
-                       transition-all duration-200 bg-white shadow-sm
+                       transition-all duration-200 bg-white text-gray-900 shadow-sm
                        placeholder:text-gray-400 text-base"
-              placeholder="name@congo-equipment.com"
+              placeholder="you@example.com"
               disabled={loading}
               autoComplete="email"
               aria-label="Email address"
@@ -182,7 +172,7 @@ export function LoginForm() {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="password" className="block text-base font-medium text-[#1A1A1A]">
+          <label htmlFor="password" className="block text-base font-medium text-gray-900">
             Password
           </label>
           <div className="relative">
@@ -196,9 +186,9 @@ export function LoginForm() {
                 setPassword(e.target.value);
                 handleInputChange();
               }}
-              className="w-full pl-10 sm:pl-12 pr-12 sm:pr-14 py-3 rounded-xl border border-gray-300 
+              className="w-full pl-10 sm:pl-12 pr-12 sm:pr-14 py-3 rounded-lg border border-gray-300 
                        focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11] 
-                       transition-all duration-200 bg-white shadow-sm
+                       transition-all duration-200 bg-white text-gray-900 shadow-sm
                        placeholder:text-gray-400 text-base"
               placeholder="••••••••"
               disabled={loading}
@@ -209,7 +199,7 @@ export function LoginForm() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2
-                       text-gray-400 hover:text-gray-600 transition-colors
+                       text-gray-400 hover:text-gray-300 transition-colors
                        focus:outline-none"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
@@ -222,36 +212,33 @@ export function LoginForm() {
           </div>
         </div>
 
+        {/* Sign In Button */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-[#1A1A1A] to-[#333333] text-white 
-                   py-3 px-4 rounded-xl font-medium text-base
-                   hover:from-[#333333] hover:to-[#1A1A1A] 
-                   focus:outline-none focus:ring-2 focus:ring-[#FFCD11] focus:ring-offset-2
+          className="w-full bg-[#FFCD11] hover:bg-[#FFE066] text-black 
+                   py-3 px-4 rounded-lg font-bold text-base
+                   focus:outline-none focus:ring-2 focus:ring-[#FFCD11] focus:ring-offset-2 focus:ring-offset-gray-900
                    disabled:opacity-50 disabled:cursor-not-allowed 
                    transition-all duration-300
-                   flex items-center justify-center space-x-2
-                   transform hover:-translate-y-0.5 active:translate-y-0
-                   shadow-lg hover:shadow-xl"
-          aria-label={loading ? "Logging in" : "Log in"}
+                   flex items-center justify-center space-x-2"
+          aria-label={loading ? "Logging in" : "Sign in"}
         >
           {loading ? (
             <>
-              <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
-              <span>Logging in...</span>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Signing in...</span>
             </>
           ) : (
-            <span>Log in</span>
+            <span>Sign In</span>
           )}
         </button>
       </form>
 
-      {/* No self-signup links per admin policy */}
-
-      <p className="mt-4 text-center text-xs sm:text-sm text-gray-500">
-        By logging in, you agree to our terms of use.
-      </p>
+      {/* Powered by Congo Equipment */}
+      <div className="mt-6 text-center">
+        <p className="text-gray-500 text-sm">Powered by Congo Equipment®</p>
+      </div>
     </div>
   );
 }

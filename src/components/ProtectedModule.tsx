@@ -62,7 +62,7 @@ export default function ProtectedModule({ moduleName, moduleLabel, children }: P
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Vérification des permissions...</p>
+          <p className="text-gray-600">Checking permissions...</p>
         </div>
       </div>
     );
@@ -87,7 +87,7 @@ export default function ProtectedModule({ moduleName, moduleLabel, children }: P
                     </div>
                   </div>
                   <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-                    Accès Refusé
+                    Access Denied
                   </h2>
                 </div>
                 <button
@@ -100,8 +100,8 @@ export default function ProtectedModule({ moduleName, moduleLabel, children }: P
 
               <div className="space-y-4">
                 <p className="text-gray-600 text-center">
-                  Vous n'avez pas les droits nécessaires pour accéder au module{' '}
-                  <span className="font-semibold text-gray-900">{moduleLabel}</span>.
+                  You don't have the necessary permissions to access the{' '}
+                  <span className="font-semibold text-gray-900">{moduleLabel}</span> module.
                 </p>
 
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
@@ -109,8 +109,8 @@ export default function ProtectedModule({ moduleName, moduleLabel, children }: P
                     <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
                     <div>
                       <p className="text-sm text-yellow-800">
-                        <strong>Note :</strong> Si vous pensez que vous devriez avoir accès à ce module,
-                        veuillez contacter un administrateur pour obtenir les permissions appropriées.
+                        <strong>Note:</strong> If you believe you should have access to this module,
+                        please contact an administrator to obtain the appropriate permissions.
                       </p>
                     </div>
                   </div>
@@ -121,7 +121,7 @@ export default function ProtectedModule({ moduleName, moduleLabel, children }: P
                   className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                   <ArrowLeft className="w-5 h-5" />
-                  <span>Retour au Dashboard</span>
+                  <span>Back to Dashboard</span>
                 </button>
               </div>
             </div>

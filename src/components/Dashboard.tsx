@@ -168,7 +168,7 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F5F5F5] to-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -228,11 +228,11 @@ export function Dashboard() {
                   {item.moduleName && (
                     <>
                       {itemHasAccess ? (
-                        <div className="bg-green-100 rounded-full p-2 shadow-md" title="Accès autorisé">
+                        <div className="bg-green-100 rounded-full p-2 shadow-md" title="Access granted">
                           <CheckCircle className="w-5 h-5 text-green-600" />
                         </div>
                       ) : (
-                        <div className="bg-red-100 rounded-full p-2 shadow-md" title="Accès refusé">
+                        <div className="bg-red-100 rounded-full p-2 shadow-md" title="Access denied">
                           <Lock className="w-5 h-5 text-red-600" />
                         </div>
                       )}
@@ -262,7 +262,7 @@ export function Dashboard() {
 
                   {/* Action */}
                   <div className="flex items-center text-sm font-medium text-gray-500 group-hover:text-[#1A1A1A] transition-colors">
-                    <span>{itemHasAccess ? 'Get started' : 'Accès limité'}</span>
+                    <span>{itemHasAccess ? 'Get started' : 'Limited access'}</span>
                     <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
                   </div>
                 </div>

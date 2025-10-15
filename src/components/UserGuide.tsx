@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Package2, Warehouse, GitBranch, Upload, Download, FileSpreadsheet, Search, Filter, Eye, Users, Shield, Database } from 'lucide-react';
+import { ArrowLeft, BookOpen, Package2, Warehouse, GitBranch, Upload, Download, FileSpreadsheet, Search, Filter, Eye, Users, Shield, Database, ShoppingCart, FolderKanban, Calendar } from 'lucide-react';
 
 export function UserGuide() {
   return (
@@ -89,6 +89,142 @@ export function UserGuide() {
               <p className="text-sm text-gray-600">
                 Find equivalent parts and cross-references for better sourcing options.
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Modules Guide */}
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <h2 className="text-xl font-bold text-[#1A1A1A] mb-6 flex items-center gap-2">
+            <Database className="h-6 w-6 text-blue-600" />
+            Additional Modules
+          </h2>
+          
+          <div className="space-y-8">
+            {/* Orders Movement Module */}
+            <div className="border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-orange-100 p-2 rounded-lg">
+                  <ShoppingCart className="h-6 w-6 text-orange-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#1A1A1A]">Orders Movement</h3>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-2">What it does:</h4>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    The Orders Movement module tracks the complete lifecycle of orders from creation to delivery. 
+                    It provides real-time visibility into order status, movement between locations, and delivery progress.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-2">Key features:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-700 text-sm">
+                    <li>Track order status changes and movement history</li>
+                    <li>Monitor delivery progress and ETA updates</li>
+                    <li>View order details including quantities, suppliers, and destinations</li>
+                    <li>Generate reports on order performance and delays</li>
+                    <li>Identify bottlenecks in the supply chain</li>
+                  </ul>
+                </div>
+                <div className="bg-orange-50 border-l-4 border-orange-500 p-3 rounded-r-lg">
+                  <p className="text-orange-800 text-sm">
+                    <strong>Use Case:</strong> Perfect for logistics teams who need to track order progress 
+                    and identify potential delivery issues before they impact customers.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Project Management Module */}
+            <div className="border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-blue-100 p-2 rounded-lg">
+                  <FolderKanban className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#1A1A1A]">Project Management</h3>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-2">What it does:</h4>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    The Project Management module helps organize and track complex projects involving multiple parts, 
+                    machines, and timelines. It provides comprehensive project analytics and resource planning capabilities.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-2">Key features:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-700 text-sm">
+                    <li>Create and manage project hierarchies with machines and parts</li>
+                    <li>Track project progress with visual dashboards and analytics</li>
+                    <li>Monitor parts usage and availability for each project</li>
+                    <li>Generate project reports and comparative analyses</li>
+                    <li>Plan resource allocation and identify critical path items</li>
+                    <li>Track project costs and budget utilization</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-2">Project Analytics:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-700 text-sm">
+                    <li><strong>Used Percentage:</strong> Shows how much of each part has been consumed</li>
+                    <li><strong>Latest ETA:</strong> Displays the most recent delivery estimates</li>
+                    <li><strong>Stock Availability:</strong> Real-time inventory levels per project</li>
+                    <li><strong>Missing Quantities:</strong> Identifies parts that need to be ordered</li>
+                  </ul>
+                </div>
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r-lg">
+                  <p className="text-blue-800 text-sm">
+                    <strong>Use Case:</strong> Essential for project managers overseeing large equipment projects 
+                    who need to ensure all parts are available when needed and track project completion status.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Dealer Forward Planning Module */}
+            <div className="border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-green-100 p-2 rounded-lg">
+                  <Calendar className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#1A1A1A]">Dealer Forward Planning</h3>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-2">What it does:</h4>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    The Dealer Forward Planning module enables dealers to plan future parts requirements based on 
+                    historical data, seasonal patterns, and projected demand. It helps optimize inventory levels 
+                    and reduce stockouts.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-2">Key features:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-700 text-sm">
+                    <li>Analyze historical consumption patterns and trends</li>
+                    <li>Generate demand forecasts based on multiple factors</li>
+                    <li>Plan inventory levels for upcoming periods</li>
+                    <li>Identify seasonal variations and peak demand periods</li>
+                    <li>Optimize ordering schedules and quantities</li>
+                    <li>Reduce carrying costs while maintaining service levels</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium text-[#1A1A1A] mb-2">Planning Tools:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-700 text-sm">
+                    <li><strong>Demand Forecasting:</strong> Predict future parts requirements</li>
+                    <li><strong>Inventory Optimization:</strong> Calculate optimal stock levels</li>
+                    <li><strong>Seasonal Analysis:</strong> Identify patterns in parts usage</li>
+                    <li><strong>Reorder Planning:</strong> Schedule optimal ordering times</li>
+                  </ul>
+                </div>
+                <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded-r-lg">
+                  <p className="text-green-800 text-sm">
+                    <strong>Use Case:</strong> Ideal for dealers and inventory managers who need to plan ahead 
+                    and ensure adequate stock levels while minimizing excess inventory and carrying costs.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

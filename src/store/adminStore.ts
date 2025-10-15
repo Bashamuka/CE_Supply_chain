@@ -145,6 +145,8 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
 
   setModuleAccess: async (userId: string, moduleName: ModuleName, hasAccess: boolean) => {
     try {
+      console.log(`Setting module access: userId=${userId}, module=${moduleName}, access=${hasAccess}`);
+      
       const { error } = await supabase
         .from('user_module_access')
         .upsert({
@@ -155,7 +157,30 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
           onConflict: 'user_id,module_name'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error setting module access:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        
+        // Provide more specific error messages
+        if (error.code === '42501') {
+          throw new Error('Permission refusée: Vérifiez que vous êtes connecté en tant qu\'administrateur');
+        } else if (error.code === '23514') {
+          throw new Error(`Module '${moduleName}' non autorisé. Veuillez contacter l'administrateur système.`);
+        } else if (error.code === '23503') {
+          throw new Error('Utilisateur non trouvé dans la base de données');
+        } else if (error.code === '23505') {
+          throw new Error('Cette permission existe déjà');
+        } else {
+          throw new Error(`Erreur de base de données (${error.code}): ${error.message || 'Erreur inconnue'}`);
+        }
+      }
+      
+      console.log(`Module access set successfully for ${moduleName}`);
     } catch (error: any) {
       console.error('Error setting module access:', error);
       throw error;

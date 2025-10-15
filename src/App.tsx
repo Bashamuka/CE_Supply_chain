@@ -17,7 +17,7 @@ import AdminInterface from './components/AdminInterface';
 import ProtectedModule from './components/ProtectedModule';
 import { UserGuide } from './components/UserGuide';
 import { LoginForm } from './components/LoginForm';
-import RegistrationForm from './components/RegistrationForm';
+import RotatingMessages from './components/RotatingMessages';
 import { BackgroundGallery } from './components/BackgroundGallery';
 import { useUserStore } from './store/userStore';
 import { supabase } from './lib/supabase';
@@ -70,7 +70,6 @@ function App() {
     <Router>
       {!user ? (
         <Routes>
-          <Route path="/register" element={<RegistrationForm />} />
           <Route path="*" element={
             <div className="min-h-screen relative">
               {/* Blurred background layer */}
@@ -84,10 +83,15 @@ function App() {
                 <div className="absolute inset-0 bg-black opacity-50"></div>
               </div>
 
-              {/* Centered login form layer */}
+              {/* Centered login + rotating messages */}
               <div className="relative z-10 min-h-screen flex items-center justify-center p-4 sm:p-8">
-                <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-2xl w-full max-w-sm mx-auto">
-                  <LoginForm />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+                  <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-2xl">
+                    <LoginForm />
+                  </div>
+                  <div className="bg-[#1A1A1A] text-white p-6 sm:p-8 rounded-3xl shadow-2xl flex items-center">
+                    <RotatingMessages />
+                  </div>
                 </div>
               </div>
             </div>

@@ -247,23 +247,10 @@ export function LoginForm() {
         </button>
       </form>
 
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600 mb-2">
-          Besoin de créer un compte ?
-        </p>
-        <Link
-          to="/register"
-          className="text-sm font-medium text-[#1A1A1A] hover:text-[#FFCD11] transition-colors"
-        >
-          Créer un nouveau compte →
-        </Link>
-      </div>
+      {/* No self-signup links per admin policy */}
 
       <p className="mt-4 text-center text-xs sm:text-sm text-gray-500">
-        By logging in, you agree to our{' '}
-        <a href="#" className="text-[#1A1A1A] hover:text-[#FFCD11] transition-colors">
-          terms of use
-        </a>
+        By logging in, you agree to our terms of use.
       </p>
     </div>
   );

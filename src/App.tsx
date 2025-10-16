@@ -14,6 +14,8 @@ import { ProjectAnalyticsView } from './components/ProjectAnalyticsView';
 import { ProjectComparativeDashboard } from './components/ProjectComparativeDashboard';
 import { DealerForwardPlanningInterface } from './components/DealerForwardPlanningInterface';
 import { ProjectCalculationSettings } from './components/ProjectCalculationSettings';
+import { OTCInterface } from './components/OTCInterface';
+import AdminInterface from './components/AdminInterface';
 import ProtectedModule from './components/ProtectedModule';
 import { UserGuide } from './components/UserGuide';
 import { LoginForm } from './components/LoginForm';

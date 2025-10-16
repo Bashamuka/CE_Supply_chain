@@ -7,17 +7,52 @@ import * as XLSX from 'xlsx';
 const formatEtaDate = (etaString: string): string => {
   if (!etaString) return '-';
 
-  const parts = etaString.split('/');
-  if (parts.length !== 3) return '-';
-
-  const day = parts[0].padStart(2, '0');
-  const month = parts[1].padStart(2, '0');
-  const year = parts[2];
-
-  const date = new Date(`${year}-${month}-${day}`);
-  if (isNaN(date.getTime())) return '-';
-
-  return `${day}-${month}-${year}`;
+  // Handle different date formats
+  const trimmedEta = etaString.trim();
+  
+  // Format: DD/MM/YYYY
+  if (trimmedEta.includes('/')) {
+    const parts = trimmedEta.split('/');
+    if (parts.length === 3) {
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      
+      const date = new Date(`${year}-${month}-${day}`);
+      if (!isNaN(date.getTime())) {
+        return `${day}-${month}-${year}`;
+      }
+    }
+  }
+  
+  // Format: YYYY-MM-DD
+  if (trimmedEta.includes('-') && trimmedEta.length >= 8) {
+    const date = new Date(trimmedEta);
+    if (!isNaN(date.getTime())) {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear().toString();
+      return `${day}-${month}-${year}`;
+    }
+  }
+  
+  // Format: DD-MM-YYYY
+  if (trimmedEta.includes('-') && trimmedEta.length >= 8) {
+    const parts = trimmedEta.split('-');
+    if (parts.length === 3 && parts[0].length <= 2) {
+      const day = parts[0].padStart(2, '0');
+      const month = parts[1].padStart(2, '0');
+      const year = parts[2];
+      
+      const date = new Date(`${year}-${month}-${day}`);
+      if (!isNaN(date.getTime())) {
+        return `${day}-${month}-${year}`;
+      }
+    }
+  }
+  
+  // If we can't parse it, return the original string (might be a valid format we don't recognize)
+  return trimmedEta;
 };
 
 export function ProjectAnalyticsView() {
@@ -622,8 +657,25 @@ export function ProjectAnalyticsView() {
                             <td className="px-4 py-3 text-center text-red-600 font-medium">
                               {part.quantity_missing}
                             </td>
-                            <td className="px-4 py-3 text-center text-gray-700">
-                              {formatEtaDate(part.latest_eta || '')}
+                            <td className="px-4 py-3 text-center">
+                              {(() => {
+                                const eta = formatEtaDate(part.latest_eta || '');
+                                const shouldHaveEta = part.quantity_in_transit > 0 || part.quantity_missing > 0;
+                                
+                                if (eta === '-' && shouldHaveEta) {
+                                  return (
+                                    <span className="text-red-600 font-medium" title="ETA missing for part in transit/backorder">
+                                      ⚠️ Missing
+                                    </span>
+                                  );
+                                }
+                                
+                                return (
+                                  <span className={eta === '-' ? 'text-gray-500' : 'text-gray-700'}>
+                                    {eta}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             <td className="px-4 py-3 text-center">
                               {isMissing ? (

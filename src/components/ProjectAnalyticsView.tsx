@@ -108,7 +108,14 @@ export function ProjectAnalyticsView() {
       await calculateProjectAnalytics(projectId);
       setRefreshMessage({ type: 'success', text: 'Data refreshed successfully!' });
     } catch (error) {
-      setRefreshMessage({ type: 'error', text: 'Failed to refresh data. Please try again.' });
+      console.error('Refresh error:', error);
+      // Only show error if we don't have any analytics data
+      if (!analytics) {
+        setRefreshMessage({ type: 'error', text: 'Failed to refresh data. Please try again.' });
+      } else {
+        // If we have data, just show a warning that refresh failed but data is still available
+        setRefreshMessage({ type: 'error', text: 'Refresh failed, but showing cached data.' });
+      }
     } finally {
       setIsRefreshing(false);
     }

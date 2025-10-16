@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Search, 
   Filter, 
@@ -18,7 +19,8 @@ import {
   Building2,
   FileText,
   RefreshCw,
-  X
+  X,
+  ArrowLeft
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -497,6 +499,17 @@ export function OTCInterface() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Back to Dashboard Link */}
+          <div className="mb-4">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              Back to Dashboard
+            </Link>
+          </div>
+          
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-[#1A1A1A] flex items-center gap-2">

@@ -70,6 +70,9 @@ export function OTCInterface() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [editingOrder, setEditingOrder] = useState<OTCOrder | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
 
   // Fetch orders from database
   const fetchOrders = async () => {
@@ -187,6 +190,123 @@ export function OTCInterface() {
     window.URL.revokeObjectURL(url);
   };
 
+  // Import CSV function
+  const handleImportCSV = async () => {
+    if (!importFile) return;
+
+    try {
+      setImportLoading(true);
+      const text = await importFile.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        alert('Le fichier CSV doit contenir au moins un en-tête et une ligne de données');
+        return;
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const expectedHeaders = [
+        'succursale', 'operateur', 'date cde', 'num cde', 'po client', 'reference',
+        'designation', 'qte cde', 'qte livree', 'solde', 'date bl', 'num bl',
+        'status', 'num client', 'nom clients'
+      ];
+
+      // Validate headers
+      const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
+      if (missingHeaders.length > 0) {
+        alert(`En-têtes manquants: ${missingHeaders.join(', ')}`);
+        return;
+      }
+
+      const orders = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        if (values.length !== headers.length) continue;
+
+        const order: Partial<OTCOrder> = {};
+        headers.forEach((header, index) => {
+          const value = values[index];
+          switch (header) {
+            case 'succursale':
+              order.succursale = value;
+              break;
+            case 'operateur':
+              order.operateur = value;
+              break;
+            case 'date cde':
+              order.date_cde = value;
+              break;
+            case 'num cde':
+              order.num_cde = value;
+              break;
+            case 'po client':
+              order.po_client = value || null;
+              break;
+            case 'reference':
+              order.reference = value;
+              break;
+            case 'designation':
+              order.designation = value;
+              break;
+            case 'qte cde':
+              order.qte_cde = parseFloat(value) || 0;
+              break;
+            case 'qte livree':
+              order.qte_livree = parseFloat(value) || 0;
+              break;
+            case 'date bl':
+              order.date_bl = value || null;
+              break;
+            case 'num bl':
+              order.num_bl = value || null;
+              break;
+            case 'status':
+              order.status = value || 'Pending';
+              break;
+            case 'num client':
+              order.num_client = value || null;
+              break;
+            case 'nom clients':
+              order.nom_clients = value || null;
+              break;
+          }
+        });
+
+        if (order.succursale && order.operateur && order.num_cde && order.reference && order.designation) {
+          orders.push(order);
+        }
+      }
+
+      if (orders.length === 0) {
+        alert('Aucune commande valide trouvée dans le fichier CSV');
+        return;
+      }
+
+      // Insert orders into database
+      const { error } = await supabase
+        .from('otc_orders')
+        .upsert(orders, { onConflict: 'succursale,num_cde' });
+
+      if (error) {
+        console.error('Error importing orders:', error);
+        alert(`Erreur lors de l'import: ${error.message}`);
+        return;
+      }
+
+      alert(`${orders.length} commandes importées avec succès`);
+      setShowImportModal(false);
+      setImportFile(null);
+      fetchOrders(); // Refresh the data
+      fetchAnalytics();
+
+    } catch (error) {
+      console.error('Error processing CSV:', error);
+      alert('Erreur lors du traitement du fichier CSV');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
@@ -218,6 +338,13 @@ export function OTCInterface() {
               >
                 <BarChart3 className="h-4 w-4" />
                 Analytics
+              </button>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                <Upload className="h-4 w-4" />
+                Import CSV
               </button>
               <button
                 onClick={exportToCSV}
@@ -278,74 +405,84 @@ export function OTCInterface() {
       {/* Filters */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search orders..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
-              />
+          <div className="space-y-4">
+            {/* First row - Search and basic filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search orders..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
+              >
+                <option value="all">All Status</option>
+                {uniqueStatuses.map(status => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+
+              {/* Succursale Filter */}
+              <select
+                value={selectedSuccursale}
+                onChange={(e) => setSelectedSuccursale(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
+              >
+                <option value="all">All Branches</option>
+                {uniqueSuccursales.map(succursale => (
+                  <option key={succursale} value={succursale}>{succursale}</option>
+                ))}
+              </select>
+
+              {/* Clear Filters */}
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedStatus('all');
+                  setSelectedSuccursale('all');
+                  setDateRange({ start: '', end: '' });
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                <XCircle className="h-4 w-4" />
+                Clear Filters
+              </button>
             </div>
 
-            {/* Status Filter */}
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
-            >
-              <option value="all">All Status</option>
-              {uniqueStatuses.map(status => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-
-            {/* Succursale Filter */}
-            <select
-              value={selectedSuccursale}
-              onChange={(e) => setSelectedSuccursale(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
-            >
-              <option value="all">All Branches</option>
-              {uniqueSuccursales.map(succursale => (
-                <option key={succursale} value={succursale}>{succursale}</option>
-              ))}
-            </select>
-
-            {/* Date Range */}
-            <div className="flex gap-2">
-              <input
-                type="date"
-                placeholder="Start Date"
-                value={dateRange.start}
-                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
-              />
-              <input
-                type="date"
-                placeholder="End Date"
-                value={dateRange.end}
-                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
-              />
+            {/* Second row - Date Range */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex gap-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <Calendar className="h-4 w-4" />
+                  Date Range:
+                </label>
+                <input
+                  type="date"
+                  placeholder="Start Date"
+                  value={dateRange.start}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
+                />
+                <span className="flex items-center text-gray-500">to</span>
+                <input
+                  type="date"
+                  placeholder="End Date"
+                  value={dateRange.end}
+                  onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
+                />
+              </div>
             </div>
-
-            {/* Clear Filters */}
-            <button
-              onClick={() => {
-                setSearchTerm('');
-                setSelectedStatus('all');
-                setSelectedSuccursale('all');
-                setDateRange({ start: '', end: '' });
-              }}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              <XCircle className="h-4 w-4" />
-              Clear
-            </button>
           </div>
         </div>
       </div>
@@ -510,6 +647,72 @@ export function OTCInterface() {
           </div>
         </div>
       </div>
+
+      {/* Import CSV Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-[#1A1A1A]">Import CSV File</h3>
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XCircle className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select CSV File
+                </label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
+                />
+              </div>
+
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Required CSV Format:</p>
+                  <p className="text-xs">
+                    SUCCURSALE, OPERATEUR, DATE CDE, NUM CDE, PO CLIENT, REFERENCE, DESIGNATION, QTE CDE, QTE LIVREE, SOLDE, DATE BL, NUM BL, STATUS, NUM CLIENT, NOM CLIENTS
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowImportModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleImportCSV}
+                  disabled={!importFile || importLoading}
+                  className="flex-1 px-4 py-2 bg-[#FFCD11] text-black rounded-lg hover:bg-[#FFE066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {importLoading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      Import
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

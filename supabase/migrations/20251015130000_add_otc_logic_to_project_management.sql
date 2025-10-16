@@ -105,7 +105,7 @@ CREATE INDEX IF NOT EXISTS idx_mv_used_enhanced_machine ON mv_project_parts_used
 CREATE INDEX IF NOT EXISTS idx_mv_used_enhanced_part ON mv_project_parts_used_quantities_enhanced(part_number);
 
 -- 4. Update the main analytics view to use the enhanced used quantities
-DROP MATERIALIZED VIEW IF EXISTS mv_project_analytics_complete;
+DROP MATERIALIZED VIEW IF EXISTS mv_project_analytics_complete CASCADE;
 
 CREATE MATERIALIZED VIEW mv_project_analytics_complete AS
 SELECT 
@@ -152,6 +152,46 @@ LEFT JOIN mv_project_parts_transit_invoiced transit
 CREATE INDEX IF NOT EXISTS idx_mv_analytics_project ON mv_project_analytics_complete(project_id);
 CREATE INDEX IF NOT EXISTS idx_mv_analytics_machine ON mv_project_analytics_complete(machine_id);
 CREATE INDEX IF NOT EXISTS idx_mv_analytics_part ON mv_project_analytics_complete(part_number);
+
+-- Recreate the diagnostic view that was dropped by CASCADE
+CREATE OR REPLACE VIEW v_eta_diagnosis AS
+SELECT 
+  pac.part_number,
+  pac.project_id,
+  pac.quantity_in_transit,
+  pac.quantity_missing,
+  pac.latest_eta as current_eta,
+  -- Debug info
+  (
+    SELECT COUNT(*)
+    FROM project_supplier_orders pso
+    JOIN parts p ON p.supplier_order = pso.supplier_order
+    WHERE pso.project_id = pac.project_id
+      AND p.part_ordered = pac.part_number
+  ) as total_parts_records,
+  (
+    SELECT COUNT(*)
+    FROM project_supplier_orders pso
+    JOIN parts p ON p.supplier_order = pso.supplier_order
+    WHERE pso.project_id = pac.project_id
+      AND p.part_ordered = pac.part_number
+      AND p.eta IS NOT NULL
+      AND TRIM(p.eta) != ''
+      AND LENGTH(TRIM(p.eta)) >= 5
+  ) as valid_eta_records,
+  (
+    SELECT ARRAY_AGG(DISTINCT p.eta ORDER BY p.eta DESC)
+    FROM project_supplier_orders pso
+    JOIN parts p ON p.supplier_order = pso.supplier_order
+    WHERE pso.project_id = pac.project_id
+      AND p.part_ordered = pac.part_number
+      AND p.eta IS NOT NULL
+      AND TRIM(p.eta) != ''
+    LIMIT 5
+  ) as all_valid_etas
+FROM mv_project_analytics_complete pac
+WHERE (pac.quantity_in_transit > 0 OR pac.quantity_missing > 0)
+  AND (pac.latest_eta IS NULL OR pac.latest_eta = '');
 
 -- 5. Update refresh function to include new views
 CREATE OR REPLACE FUNCTION refresh_project_analytics_views()

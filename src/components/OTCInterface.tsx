@@ -205,71 +205,142 @@ export function OTCInterface() {
         return;
       }
 
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-      const expectedHeaders = [
-        'succursale', 'operateur', 'date cde', 'num cde', 'po client', 'reference',
-        'designation', 'qte cde', 'qte livree', 'solde', 'date bl', 'num bl',
-        'status', 'num client', 'nom clients'
-      ];
+      // Parse headers with multiple possible separators and formats
+      const headerLine = lines[0];
+      let headers = [];
+      
+      // Try different separators
+      if (headerLine.includes(';')) {
+        headers = headerLine.split(';').map(h => h.trim().toLowerCase());
+      } else if (headerLine.includes('\t')) {
+        headers = headerLine.split('\t').map(h => h.trim().toLowerCase());
+      } else {
+        headers = headerLine.split(',').map(h => h.trim().toLowerCase());
+      }
 
-      // Validate headers
-      const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
-      if (missingHeaders.length > 0) {
-        alert(`En-têtes manquants: ${missingHeaders.join(', ')}`);
+      // Define expected headers with multiple possible variations
+      const expectedHeadersMap = {
+        'succursale': ['succursale', 'branch', 'branche', 'site'],
+        'operateur': ['operateur', 'operator', 'user', 'utilisateur'],
+        'date cde': ['date cde', 'date_cde', 'date commande', 'order date', 'date order'],
+        'num cde': ['num cde', 'num_cde', 'numero commande', 'order number', 'order_number'],
+        'po client': ['po client', 'po_client', 'customer po', 'customer_po', 'client po'],
+        'reference': ['reference', 'ref', 'part number', 'part_number', 'part'],
+        'designation': ['designation', 'description', 'desc', 'part description'],
+        'qte cde': ['qte cde', 'qte_cde', 'quantity ordered', 'qty ordered', 'ordered qty'],
+        'qte livree': ['qte livree', 'qte_livree', 'quantity delivered', 'qty delivered', 'delivered qty'],
+        'solde': ['solde', 'balance', 'remaining', 'restant'],
+        'date bl': ['date bl', 'date_bl', 'delivery date', 'livraison date'],
+        'num bl': ['num bl', 'num_bl', 'delivery note', 'bon livraison', 'bl number'],
+        'status': ['status', 'statut', 'etat', 'state'],
+        'num client': ['num client', 'num_client', 'customer number', 'client number'],
+        'nom clients': ['nom clients', 'nom_clients', 'customer name', 'client name', 'customer']
+      };
+
+      // Find matching headers
+      const foundHeaders = {};
+      const missingHeaders = [];
+
+      for (const [expectedKey, possibleValues] of Object.entries(expectedHeadersMap)) {
+        const foundHeader = headers.find(header => 
+          possibleValues.some(possible => 
+            header.includes(possible.toLowerCase()) || 
+            possible.toLowerCase().includes(header)
+          )
+        );
+        
+        if (foundHeader) {
+          foundHeaders[expectedKey] = foundHeader;
+        } else {
+          missingHeaders.push(expectedKey);
+        }
+      }
+
+      // Only require essential headers
+      const essentialHeaders = ['succursale', 'operateur', 'num cde', 'reference', 'designation', 'qte cde'];
+      const missingEssential = missingHeaders.filter(h => essentialHeaders.includes(h));
+      
+      if (missingEssential.length > 0) {
+        alert(`En-têtes essentiels manquants: ${missingEssential.join(', ')}\n\nEn-têtes trouvés: ${headers.join(', ')}`);
         return;
       }
 
       const orders = [];
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
+        // Parse values with same separator as headers
+        let values = [];
+        if (headerLine.includes(';')) {
+          values = lines[i].split(';').map(v => v.trim());
+        } else if (headerLine.includes('\t')) {
+          values = lines[i].split('\t').map(v => v.trim());
+        } else {
+          values = lines[i].split(',').map(v => v.trim());
+        }
+        
         if (values.length !== headers.length) continue;
 
         const order: Partial<OTCOrder> = {};
+        
+        // Map values using found headers
         headers.forEach((header, index) => {
           const value = values[index];
-          switch (header) {
-            case 'succursale':
-              order.succursale = value;
+          
+          // Find which expected header this matches
+          for (const [expectedKey, possibleValues] of Object.entries(expectedHeadersMap)) {
+            if (possibleValues.some(possible => 
+              header.includes(possible.toLowerCase()) || 
+              possible.toLowerCase().includes(header)
+            )) {
+              // Map the value to the correct field
+              switch (expectedKey) {
+                case 'succursale':
+                  order.succursale = value;
+                  break;
+                case 'operateur':
+                  order.operateur = value;
+                  break;
+                case 'date cde':
+                  order.date_cde = value;
+                  break;
+                case 'num cde':
+                  order.num_cde = value;
+                  break;
+                case 'po client':
+                  order.po_client = value || null;
+                  break;
+                case 'reference':
+                  order.reference = value;
+                  break;
+                case 'designation':
+                  order.designation = value;
+                  break;
+                case 'qte cde':
+                  order.qte_cde = parseFloat(value) || 0;
+                  break;
+                case 'qte livree':
+                  order.qte_livree = parseFloat(value) || 0;
+                  break;
+                case 'solde':
+                  // solde is calculated automatically, but we can use it for validation
+                  break;
+                case 'date bl':
+                  order.date_bl = value || null;
+                  break;
+                case 'num bl':
+                  order.num_bl = value || null;
+                  break;
+                case 'status':
+                  order.status = value || 'Pending';
+                  break;
+                case 'num client':
+                  order.num_client = value || null;
+                  break;
+                case 'nom clients':
+                  order.nom_clients = value || null;
+                  break;
+              }
               break;
-            case 'operateur':
-              order.operateur = value;
-              break;
-            case 'date cde':
-              order.date_cde = value;
-              break;
-            case 'num cde':
-              order.num_cde = value;
-              break;
-            case 'po client':
-              order.po_client = value || null;
-              break;
-            case 'reference':
-              order.reference = value;
-              break;
-            case 'designation':
-              order.designation = value;
-              break;
-            case 'qte cde':
-              order.qte_cde = parseFloat(value) || 0;
-              break;
-            case 'qte livree':
-              order.qte_livree = parseFloat(value) || 0;
-              break;
-            case 'date bl':
-              order.date_bl = value || null;
-              break;
-            case 'num bl':
-              order.num_bl = value || null;
-              break;
-            case 'status':
-              order.status = value || 'Pending';
-              break;
-            case 'num client':
-              order.num_client = value || null;
-              break;
-            case 'nom clients':
-              order.nom_clients = value || null;
-              break;
+            }
           }
         });
 

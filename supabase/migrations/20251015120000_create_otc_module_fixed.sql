@@ -23,9 +23,13 @@
   - NOM CLIENTS: Customer name
 */
 
--- Create OTC table
+-- Drop existing table and sequence if they exist to allow recreation with BIGSERIAL
+DROP TABLE IF EXISTS otc_orders CASCADE;
+DROP SEQUENCE IF EXISTS otc_orders_id_seq CASCADE;
+
+-- Create OTC table with auto-incrementing primary key
 CREATE TABLE IF NOT EXISTS otc_orders (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  id BIGSERIAL PRIMARY KEY,
   succursale TEXT NOT NULL,
   operateur TEXT NOT NULL,
   date_cde DATE NOT NULL,
@@ -62,8 +66,8 @@ CREATE INDEX IF NOT EXISTS idx_otc_succursale_date ON otc_orders(succursale, dat
 CREATE INDEX IF NOT EXISTS idx_otc_status_date ON otc_orders(status, date_cde);
 CREATE INDEX IF NOT EXISTS idx_otc_client_status ON otc_orders(num_client, status);
 
--- Create unique constraint on order number per branch
-CREATE UNIQUE INDEX IF NOT EXISTS idx_otc_unique_order ON otc_orders(succursale, num_cde);
+-- Removed unique constraint on (succursale, num_cde) to allow multiple orders with same reference
+-- A part can be delivered on multiple delivery notes (BL)
 
 -- Enable Row Level Security
 ALTER TABLE otc_orders ENABLE ROW LEVEL SECURITY;
@@ -227,12 +231,27 @@ BEGIN
 END;
 $$;
 
+-- Create function to truncate table and restart identity (reset ID counter)
+CREATE OR REPLACE FUNCTION truncate_otc_orders_restart_identity()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Truncate table and restart the ID sequence from 1
+  TRUNCATE TABLE otc_orders RESTART IDENTITY CASCADE;
+  
+  RAISE NOTICE 'OTC orders table truncated and ID counter reset to 1';
+END;
+$$;
+
 -- Grant permissions
 GRANT SELECT, INSERT, UPDATE, DELETE ON otc_orders TO authenticated;
 GRANT SELECT ON v_otc_analytics TO authenticated;
 GRANT SELECT ON v_otc_customer_analytics TO authenticated;
 GRANT SELECT ON v_otc_status_tracking TO authenticated;
 GRANT EXECUTE ON FUNCTION refresh_otc_analytics() TO authenticated;
+GRANT EXECUTE ON FUNCTION truncate_otc_orders_restart_identity() TO authenticated;
 
 -- Final verification
 DO $$

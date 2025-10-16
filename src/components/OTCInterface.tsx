@@ -368,17 +368,24 @@ export function OTCInterface() {
         return;
       }
 
-      // Clear existing data first
-      console.log('Clearing existing OTC orders...');
-      const { error: deleteError } = await supabase
-        .from('otc_orders')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+      // Clear existing data and reset ID counter
+      console.log('Clearing existing OTC orders and resetting ID counter...');
+      const { error: truncateError } = await supabase
+        .rpc('truncate_otc_orders_restart_identity');
 
-      if (deleteError) {
-        console.error('Error clearing existing orders:', deleteError);
-        alert(`Erreur lors de la suppression des données existantes: ${deleteError.message}`);
-        return;
+      if (truncateError) {
+        console.error('Error truncating table:', truncateError);
+        // Fallback to regular delete if RPC function doesn't exist
+        const { error: deleteError } = await supabase
+          .from('otc_orders')
+          .delete()
+          .neq('id', 0); // Delete all records
+
+        if (deleteError) {
+          console.error('Error clearing existing orders:', deleteError);
+          alert(`Erreur lors de la suppression des données existantes: ${deleteError.message}`);
+          return;
+        }
       }
 
       // Insert new orders
@@ -393,7 +400,7 @@ export function OTCInterface() {
         return;
       }
 
-      alert(`${orders.length} commandes importées avec succès\n\n• Données existantes supprimées\n• Nouvelles données insérées\n• Dates converties du format DD/MM/YYYY vers YYYY-MM-DD`);
+      alert(`${orders.length} commandes importées avec succès\n\n• Données existantes supprimées\n• Compteur ID réinitialisé à 1\n• Nouvelles données insérées\n• Dates converties du format DD/MM/YYYY vers YYYY-MM-DD`);
       setShowImportModal(false);
       setImportFile(null);
       fetchOrders(); // Refresh the data

@@ -199,6 +199,42 @@ export interface UserModuleAccess {
   updated_at?: string;
 }
 
+export interface OTCOrder {
+  id: string;
+  succursale: string;
+  operateur: string;
+  date_cde: string;
+  num_cde: string;
+  po_client: string | null;
+  reference: string;
+  designation: string;
+  qte_cde: number;
+  qte_livree: number;
+  solde: number;
+  date_bl: string | null;
+  num_bl: string | null;
+  status: string;
+  num_client: string | null;
+  nom_clients: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OTCAnalytics {
+  succursale: string;
+  total_orders: number;
+  delivered_orders: number;
+  pending_orders: number;
+  in_progress_orders: number;
+  cancelled_orders: number;
+  total_ordered_quantity: number;
+  total_delivered_quantity: number;
+  total_balance: number;
+  delivery_percentage: number;
+  earliest_order_date: string;
+  latest_order_date: string;
+}
+
 export interface UserProjectAccess {
   id: string;
   user_id: string;
@@ -214,11 +250,12 @@ export interface UserProfile {
   updated_at?: string;
 }
 
-export type ModuleName =
+export type ModuleName = 
   | 'global_dashboard'
   | 'eta_tracking'
   | 'stock_availability'
   | 'parts_equivalence'
   | 'orders'
   | 'projects'
-  | 'dealer_forward_planning';
+  | 'dealer_forward_planning'
+  | 'otc';

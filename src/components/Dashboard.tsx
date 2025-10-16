@@ -113,6 +113,17 @@ export function Dashboard() {
       moduleName: 'dealer_forward_planning'
     },
     {
+      title: 'OTC - Order Tracking & Control',
+      description: 'Comprehensive order management and tracking with detailed analytics',
+      icon: Package,
+      path: '/otc',
+      color: 'from-pink-500 to-pink-600',
+      hoverColor: 'hover:from-pink-600 hover:to-pink-700',
+      iconBg: 'bg-pink-100',
+      iconColor: 'text-pink-600',
+      moduleName: 'otc'
+    },
+    {
       title: 'User Guide',
       description: 'Complete guide and documentation for using the application',
       icon: BookOpen,

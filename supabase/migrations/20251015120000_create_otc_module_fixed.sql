@@ -220,7 +220,6 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  -- Refresh materialized views if they exist
   -- Note: We're using regular views, not materialized views, so no refresh needed
   -- The views will automatically reflect current data
   

@@ -3,9 +3,7 @@ import { Link } from 'react-router-dom';
 import { 
   Search, 
   Filter, 
-  Download, 
   Upload, 
-  Plus, 
   Trash2, 
   Calendar,
   Package,
@@ -70,8 +68,6 @@ export function OTCInterface() {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [showAnalytics, setShowAnalytics] = useState(true); // Analytics visible par défaut
   const [showTable, setShowTable] = useState(false); // Tableau masqué par défaut
-  const [editingOrder, setEditingOrder] = useState<OTCOrder | null>(null);
-  const [showForm, setShowForm] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState(false);
@@ -164,39 +160,6 @@ export function OTCInterface() {
     );
   };
 
-  // Export to CSV
-  const exportToCSV = () => {
-    const csvContent = [
-      ['SUCCURSALE', 'OPERATEUR', 'DATE CDE', 'NUM CDE', 'PO CLIENT', 'REFERENCE', 
-       'DESIGNATION', 'QTE CDE', 'QTE LIVREE', 'SOLDE', 'DATE BL', 'NUM BL', 
-       'STATUS', 'NUM CLIENT', 'NOM CLIENTS'].join(','),
-      ...filteredOrders.map(order => [
-        order.succursale,
-        order.operateur,
-        order.date_cde,
-        order.num_cde,
-        order.po_client || '',
-        order.reference,
-        order.designation,
-        order.qte_cde,
-        order.qte_livree,
-        order.solde,
-        order.date_bl || '',
-        order.num_bl || '',
-        order.status,
-        order.num_client || '',
-        order.nom_clients || ''
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `otc_orders_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
 
   // Import CSV function
   const handleImportCSV = async () => {
@@ -547,20 +510,6 @@ export function OTCInterface() {
               >
                 <Upload className="h-4 w-4" />
                 Import CSV
-              </button>
-              <button
-                onClick={exportToCSV}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Download className="h-4 w-4" />
-                Export CSV
-              </button>
-              <button
-                onClick={() => setShowForm(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-[#FFCD11] text-black rounded-lg hover:bg-[#FFE066] transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                New Order
               </button>
             </div>
           </div>

@@ -221,9 +221,8 @@ SECURITY DEFINER
 AS $$
 BEGIN
   -- Refresh materialized views if they exist
-  REFRESH MATERIALIZED VIEW IF EXISTS mv_otc_analytics;
-  REFRESH MATERIALIZED VIEW IF EXISTS mv_otc_customer_analytics;
-  REFRESH MATERIALIZED VIEW IF EXISTS mv_otc_status_tracking;
+  -- Note: We're using regular views, not materialized views, so no refresh needed
+  -- The views will automatically reflect current data
   
   RAISE NOTICE 'OTC analytics refreshed successfully';
 END;

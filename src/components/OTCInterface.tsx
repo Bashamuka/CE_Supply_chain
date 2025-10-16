@@ -5,9 +5,7 @@ import {
   Download, 
   Upload, 
   Plus, 
-  Edit, 
   Trash2, 
-  Eye, 
   Calendar,
   Package,
   Truck,
@@ -19,7 +17,8 @@ import {
   Users,
   Building2,
   FileText,
-  RefreshCw
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -75,8 +74,6 @@ export function OTCInterface() {
   const [importLoading, setImportLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<OTCOrder | null>(null);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [orderToView, setOrderToView] = useState<OTCOrder | null>(null);
 
   // Fetch orders from database
   const fetchOrders = async () => {
@@ -336,31 +333,6 @@ export function OTCInterface() {
     }
   };
 
-  // Update order function
-  const handleUpdateOrder = async (orderData: Partial<OTCOrder>) => {
-    if (!editingOrder) return;
-
-    try {
-      const { error } = await supabase
-        .from('otc_orders')
-        .update(orderData)
-        .eq('id', editingOrder.id);
-
-      if (error) {
-        console.error('Error updating order:', error);
-        alert(`Erreur lors de la mise à jour: ${error.message}`);
-        return;
-      }
-
-      alert('Commande mise à jour avec succès');
-      setEditingOrder(null);
-      fetchOrders(); // Refresh the data
-      fetchAnalytics();
-    } catch (error) {
-      console.error('Error updating order:', error);
-      alert('Erreur lors de la mise à jour de la commande');
-    }
-  };
 
   if (loading) {
     return (
@@ -636,24 +608,7 @@ export function OTCInterface() {
                       <StatusBadge status={order.status} />
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setEditingOrder(order)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="Edit order"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setOrderToView(order);
-                            setShowViewModal(true);
-                          }}
-                          className="text-green-600 hover:text-green-900"
-                          title="View details"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
+                      <div className="flex justify-center">
                         <button
                           onClick={() => {
                             setOrderToDelete(order);
@@ -777,108 +732,6 @@ export function OTCInterface() {
         </div>
       )}
 
-      {/* View Order Modal */}
-      {showViewModal && orderToView && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-[#1A1A1A]">Order Details</h3>
-              <button
-                onClick={() => {
-                  setShowViewModal(false);
-                  setOrderToView(null);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-                <p className="text-sm text-[#1A1A1A]">{orderToView.succursale}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Operator</label>
-                <p className="text-sm text-[#1A1A1A]">{orderToView.operateur}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Order Date</label>
-                <p className="text-sm text-[#1A1A1A]">{new Date(orderToView.date_cde).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Order Number</label>
-                <p className="text-sm text-[#1A1A1A]">{orderToView.num_cde}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Customer PO</label>
-                <p className="text-sm text-[#1A1A1A]">{orderToView.po_client || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reference</label>
-                <p className="text-sm text-[#1A1A1A]">{orderToView.reference}</p>
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <p className="text-sm text-[#1A1A1A]">{orderToView.designation}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ordered Quantity</label>
-                <p className="text-sm text-[#1A1A1A]">{orderToView.qte_cde}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Delivered Quantity</label>
-                <p className="text-sm text-[#1A1A1A]">{orderToView.qte_livree}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Balance</label>
-                <p className="text-sm text-[#1A1A1A]">{orderToView.solde}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <StatusBadge status={orderToView.status} />
-              </div>
-              {orderToView.date_bl && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Date</label>
-                    <p className="text-sm text-[#1A1A1A]">{new Date(orderToView.date_bl).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Note</label>
-                    <p className="text-sm text-[#1A1A1A]">{orderToView.num_bl}</p>
-                  </div>
-                </>
-              )}
-              {orderToView.num_client && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer Number</label>
-                    <p className="text-sm text-[#1A1A1A]">{orderToView.num_client}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
-                    <p className="text-sm text-[#1A1A1A]">{orderToView.nom_clients}</p>
-                  </div>
-                </>
-              )}
-            </div>
-            
-            <div className="flex justify-end mt-6">
-              <button
-                onClick={() => {
-                  setShowViewModal(false);
-                  setOrderToView(null);
-                }}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && orderToDelete && (

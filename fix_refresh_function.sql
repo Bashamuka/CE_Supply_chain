@@ -1,7 +1,7 @@
 -- Script pour corriger la fonction refresh_project_analytics_views
 -- Ce script vérifie l'existence de la fonction et la crée si nécessaire
 
-DO $$
+DO $MAIN$
 BEGIN
     -- Vérifier si la fonction existe
     IF NOT EXISTS (
@@ -15,7 +15,7 @@ BEGIN
         RETURNS void
         LANGUAGE plpgsql
         SECURITY DEFINER
-        AS $$
+        AS $FUNCTION$
         BEGIN
             -- Rafraîchir toutes les vues matérialisées dans l'ordre de dépendance
             -- Utiliser CONCURRENTLY quand possible, sinon utiliser le rafraîchissement normal
@@ -78,20 +78,20 @@ BEGIN
             
             RAISE NOTICE 'Toutes les vues d''analyse de projet ont été rafraîchies avec succès';
         END;
-        $$;
+        $FUNCTION$;
         
         RAISE NOTICE 'Fonction refresh_project_analytics_views créée avec succès';
     ELSE
         RAISE NOTICE 'Fonction refresh_project_analytics_views existe déjà';
     END IF;
-END $$;
+END $MAIN$;
 
 -- Test de la fonction
-DO $$
+DO $TEST$
 BEGIN
     RAISE NOTICE 'Test de la fonction refresh_project_analytics_views...';
     PERFORM refresh_project_analytics_views();
     RAISE NOTICE 'Test réussi !';
 EXCEPTION WHEN OTHERS THEN
     RAISE NOTICE 'Erreur lors du test: %', SQLERRM;
-END $$;
+END $TEST$;

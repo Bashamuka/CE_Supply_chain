@@ -19,7 +19,7 @@ VITE_LOG_LEVEL=info
 "@
 
 # Chemin du fichier .env
-$envPath = ".\CE_Supply_chain\.env"
+$envPath = ".\.env"
 
 # Vérifier si le fichier existe déjà
 if (Test-Path $envPath) {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useUserStore } from '../store/userStore';
+import { SupabaseConnectionDiagnostic } from './SupabaseConnectionDiagnostic';
 import { AlertCircle, Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export function LoginForm() {
@@ -9,6 +10,7 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
   const setUser = useUserStore((state) => state.setUser);
 
   const validateForm = () => {
@@ -234,6 +236,24 @@ export function LoginForm() {
           )}
         </button>
       </form>
+
+      {/* Diagnostic Button */}
+      <div className="mt-4 text-center">
+        <button
+          type="button"
+          onClick={() => setShowDiagnostic(!showDiagnostic)}
+          className="text-sm text-blue-600 hover:text-blue-700 underline"
+        >
+          {showDiagnostic ? 'Hide' : 'Show'} Connection Diagnostic
+        </button>
+      </div>
+
+      {/* Diagnostic Component */}
+      {showDiagnostic && (
+        <div className="mt-6">
+          <SupabaseConnectionDiagnostic />
+        </div>
+      )}
 
       {/* Powered by Congo Equipment */}
       <div className="mt-6 text-center">

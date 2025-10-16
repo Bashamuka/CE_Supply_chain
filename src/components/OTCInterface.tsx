@@ -300,7 +300,7 @@ export function OTCInterface() {
                   order.operateur = value;
                   break;
                 case 'date cde':
-                  order.date_cde = value;
+                  order.date_cde = convertDateFormat(value) || value;
                   break;
                 case 'num cde':
                   order.num_cde = value;
@@ -324,7 +324,7 @@ export function OTCInterface() {
                   // solde is calculated automatically, but we can use it for validation
                   break;
                 case 'date bl':
-                  order.date_bl = value || null;
+                  order.date_bl = convertDateFormat(value);
                   break;
                 case 'num bl':
                   order.num_bl = value || null;
@@ -344,13 +344,27 @@ export function OTCInterface() {
           }
         });
 
+        // Validate essential fields and date format
         if (order.succursale && order.operateur && order.num_cde && order.reference && order.designation) {
+          // Validate date_cde format
+          if (order.date_cde && !order.date_cde.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            console.warn(`Invalid date format for order ${order.num_cde}: ${order.date_cde}`);
+            // Try to convert again or skip this order
+            const convertedDate = convertDateFormat(order.date_cde);
+            if (convertedDate) {
+              order.date_cde = convertedDate;
+            } else {
+              console.error(`Cannot convert date ${order.date_cde} for order ${order.num_cde}`);
+              continue; // Skip this order
+            }
+          }
+          
           orders.push(order);
         }
       }
 
       if (orders.length === 0) {
-        alert('Aucune commande valide trouvée dans le fichier CSV');
+        alert('Aucune commande valide trouvée dans le fichier CSV\n\nVérifiez que les dates sont au format DD/MM/YYYY (ex: 24/06/2024)');
         return;
       }
 
@@ -365,7 +379,7 @@ export function OTCInterface() {
         return;
       }
 
-      alert(`${orders.length} commandes importées avec succès`);
+      alert(`${orders.length} commandes importées avec succès\n\nDates converties du format DD/MM/YYYY vers YYYY-MM-DD`);
       setShowImportModal(false);
       setImportFile(null);
       fetchOrders(); // Refresh the data
@@ -377,6 +391,42 @@ export function OTCInterface() {
     } finally {
       setImportLoading(false);
     }
+  };
+
+  // Helper function to convert DD/MM/YYYY to YYYY-MM-DD
+  const convertDateFormat = (dateStr: string): string | null => {
+    if (!dateStr || dateStr.trim() === '') return null;
+    
+    // Handle DD/MM/YYYY format
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const day = parts[0].padStart(2, '0');
+        const month = parts[1].padStart(2, '0');
+        const year = parts[2];
+        
+        // Validate date components
+        if (day.length === 2 && month.length === 2 && year.length === 4) {
+          return `${year}-${month}-${day}`;
+        }
+      }
+    }
+    
+    // Handle DD-MM-YYYY format
+    if (dateStr.includes('-') && dateStr.length === 10) {
+      const parts = dateStr.split('-');
+      if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+    
+    // If already in YYYY-MM-DD format, return as is
+    if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return dateStr;
+    }
+    
+    // If we can't parse it, return null
+    return null;
   };
 
   // Delete order function

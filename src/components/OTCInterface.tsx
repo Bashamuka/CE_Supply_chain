@@ -368,10 +368,24 @@ export function OTCInterface() {
         return;
       }
 
-      // Insert orders into database
+      // Clear existing data first
+      console.log('Clearing existing OTC orders...');
+      const { error: deleteError } = await supabase
+        .from('otc_orders')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+
+      if (deleteError) {
+        console.error('Error clearing existing orders:', deleteError);
+        alert(`Erreur lors de la suppression des données existantes: ${deleteError.message}`);
+        return;
+      }
+
+      // Insert new orders
+      console.log('Inserting new orders...');
       const { error } = await supabase
         .from('otc_orders')
-        .upsert(orders, { onConflict: 'succursale,num_cde' });
+        .insert(orders);
 
       if (error) {
         console.error('Error importing orders:', error);
@@ -379,7 +393,7 @@ export function OTCInterface() {
         return;
       }
 
-      alert(`${orders.length} commandes importées avec succès\n\nDates converties du format DD/MM/YYYY vers YYYY-MM-DD`);
+      alert(`${orders.length} commandes importées avec succès\n\n• Données existantes supprimées\n• Nouvelles données insérées\n• Dates converties du format DD/MM/YYYY vers YYYY-MM-DD`);
       setShowImportModal(false);
       setImportFile(null);
       fetchOrders(); // Refresh the data

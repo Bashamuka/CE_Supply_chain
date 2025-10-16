@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, CreditCard as Edit2, Trash2, Save, X, Package, TrendingUp, Loader2, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Plus, CreditCard as Edit2, Trash2, Save, X, Package, TrendingUp, Loader2, BarChart3, FileText } from 'lucide-react';
 import { useProjectsStore } from '../store/projectsStore';
 import { useUserStore } from '../store/userStore';
 import { ProjectMachine, ProjectMachinePart, ProjectMachineOrderNumber } from '../types';
+import { ProjectBLManagement } from './ProjectBLManagement';
+import { ProjectMethodValidation } from './ProjectMethodValidation';
 
 const BRANCH_OPTIONS = [
   { value: 'gdc', label: 'GDC' },
@@ -38,6 +40,7 @@ export function ProjectDetailsInterface() {
     machineParts,
     supplierOrders,
     branches,
+    blNumbers,
     isLoading,
     error,
     fetchProjectById,
@@ -46,6 +49,7 @@ export function ProjectDetailsInterface() {
     fetchMachineParts,
     fetchSupplierOrders,
     fetchBranches,
+    fetchBLNumbers,
     createMachine,
     updateMachine,
     deleteMachine,
@@ -57,10 +61,12 @@ export function ProjectDetailsInterface() {
     createSupplierOrder,
     deleteSupplierOrder,
     createBranch,
-    deleteBranch
+    deleteBranch,
+    createBLNumber,
+    deleteBLNumber
   } = useProjectsStore();
 
-  const [activeTab, setActiveTab] = useState<'machines' | 'suppliers' | 'branches' | 'analytics'>('machines');
+  const [activeTab, setActiveTab] = useState<'machines' | 'suppliers' | 'branches' | 'bl' | 'analytics'>('machines');
   const [showMachineModal, setShowMachineModal] = useState(false);
   const [editingMachine, setEditingMachine] = useState<ProjectMachine | null>(null);
   const [selectedMachine, setSelectedMachine] = useState<string | null>(null);
@@ -99,8 +105,9 @@ export function ProjectDetailsInterface() {
       fetchMachines(projectId);
       fetchSupplierOrders(projectId);
       fetchBranches(projectId);
+      fetchBLNumbers(projectId);
     }
-  }, [projectId, fetchProjectById, fetchMachines, fetchSupplierOrders, fetchBranches]);
+  }, [projectId, fetchProjectById, fetchMachines, fetchSupplierOrders, fetchBranches, fetchBLNumbers]);
 
   useEffect(() => {
     if (selectedMachine) {
@@ -446,6 +453,13 @@ export function ProjectDetailsInterface() {
           </div>
         )}
 
+        {/* Project Method Validation */}
+        {projectId && (
+          <div className="mb-6">
+            <ProjectMethodValidation projectId={projectId} />
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow">
           <div className="border-b">
             <div className="flex">
@@ -478,6 +492,19 @@ export function ProjectDetailsInterface() {
                 }`}
               >
                 Branches
+              </button>
+              <button
+                onClick={() => setActiveTab('bl')}
+                className={`px-6 py-3 font-medium transition-colors ${
+                  activeTab === 'bl'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Numéros de BL
+                </div>
               </button>
             </div>
           </div>
@@ -822,6 +849,18 @@ export function ProjectDetailsInterface() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'bl' && (
+              <div>
+                <ProjectBLManagement
+                  projectId={projectId!}
+                  blNumbers={blNumbers}
+                  onCreateBLNumber={createBLNumber}
+                  onDeleteBLNumber={deleteBLNumber}
+                  isLoading={isLoading}
+                />
               </div>
             )}
           </div>

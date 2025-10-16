@@ -7,6 +7,7 @@ import {
   ProjectMachineOrderNumber,
   ProjectSupplierOrder,
   ProjectBranch,
+  ProjectBLNumber,
   ProjectAnalytics,
   MachineAnalytics
 } from '../types';
@@ -19,6 +20,7 @@ interface ProjectsState {
   machineParts: ProjectMachinePart[];
   supplierOrders: ProjectSupplierOrder[];
   branches: ProjectBranch[];
+  blNumbers: ProjectBLNumber[];
   analytics: ProjectAnalytics | null;
   isLoading: boolean;
   error: string | null;
@@ -51,6 +53,10 @@ interface ProjectsState {
   createBranch: (branch: Omit<ProjectBranch, 'id' | 'created_at'>) => Promise<ProjectBranch | null>;
   deleteBranch: (id: string) => Promise<void>;
 
+  fetchBLNumbers: (projectId: string) => Promise<void>;
+  createBLNumber: (blNumber: Omit<ProjectBLNumber, 'id' | 'created_at' | 'updated_at'>) => Promise<ProjectBLNumber | null>;
+  deleteBLNumber: (id: string) => Promise<void>;
+
   calculateProjectAnalytics: (projectId: string) => Promise<void>;
   refreshAnalyticsViews: () => Promise<void>;
 
@@ -65,6 +71,7 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
   machineParts: [],
   supplierOrders: [],
   branches: [],
+  blNumbers: [],
   analytics: null,
   isLoading: false,
   error: null,
@@ -491,6 +498,61 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
     }
   },
 
+  fetchBLNumbers: async (projectId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { data, error } = await supabase
+        .from('project_bl_numbers')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      set({ blNumbers: data || [], isLoading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  createBLNumber: async (blNumber) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { data, error } = await supabase
+        .from('project_bl_numbers')
+        .insert([blNumber])
+        .select()
+        .single();
+
+      if (error) throw error;
+      set({ isLoading: false });
+      await get().fetchBLNumbers(blNumber.project_id);
+      return data;
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+      return null;
+    }
+  },
+
+  deleteBLNumber: async (id) => {
+    set({ isLoading: true, error: null });
+    try {
+      const blNumber = get().blNumbers.find(b => b.id === id);
+      const { error } = await supabase
+        .from('project_bl_numbers')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      if (blNumber) {
+        await get().fetchBLNumbers(blNumber.project_id);
+      }
+      set({ isLoading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
   refreshAnalyticsViews: async () => {
     try {
       const { error } = await supabase
@@ -660,9 +722,11 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
       projects: [],
       currentProject: null,
       machines: [],
+      machineOrderNumbers: [],
       machineParts: [],
       supplierOrders: [],
       branches: [],
+      blNumbers: [],
       analytics: null,
       isLoading: false,
       error: null

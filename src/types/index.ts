@@ -144,6 +144,15 @@ export interface ProjectBranch {
   created_at?: string;
 }
 
+export interface ProjectBLNumber {
+  id: string;
+  project_id: string;
+  bl_number: string;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface MachineAnalytics {
   machine_id: string;
   machine_name: string;

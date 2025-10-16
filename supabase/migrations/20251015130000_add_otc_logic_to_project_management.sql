@@ -105,6 +105,7 @@ CREATE INDEX IF NOT EXISTS idx_mv_used_enhanced_machine ON mv_project_parts_used
 CREATE INDEX IF NOT EXISTS idx_mv_used_enhanced_part ON mv_project_parts_used_quantities_enhanced(part_number);
 
 -- 4. Update the main analytics view to use the enhanced used quantities
+-- Now that all dependent views are created, we can recreate the main analytics view
 DROP MATERIALIZED VIEW IF EXISTS mv_project_analytics_complete CASCADE;
 
 CREATE MATERIALIZED VIEW mv_project_analytics_complete AS

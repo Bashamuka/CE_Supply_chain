@@ -66,7 +66,8 @@ export function OTCInterface() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedSuccursale, setSelectedSuccursale] = useState('all');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(true); // Analytics visible par défaut
+  const [showTable, setShowTable] = useState(false); // Tableau masqué par défaut
   const [editingOrder, setEditingOrder] = useState<OTCOrder | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -131,6 +132,10 @@ export function OTCInterface() {
 
     return matchesSearch && matchesStatus && matchesSuccursale && matchesDateRange;
   });
+
+  // Check if there's an active search/filter
+  const hasActiveSearch = searchTerm || selectedStatus !== 'all' || selectedSuccursale !== 'all' || 
+    dateRange.start || dateRange.end;
 
   // Get unique values for filters
   const uniqueStatuses = [...new Set(orders.map(order => order.status))];
@@ -500,14 +505,29 @@ export function OTCInterface() {
               </h1>
               <p className="text-gray-600 mt-1">Comprehensive order management and tracking</p>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowAnalytics(!showAnalytics)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <BarChart3 className="h-4 w-4" />
-                Analytics
-              </button>
+      <div className="flex gap-3">
+        <button
+          onClick={() => setShowAnalytics(!showAnalytics)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+            showAnalytics 
+              ? 'bg-blue-700 text-white' 
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          <BarChart3 className="h-4 w-4" />
+          Analytics
+        </button>
+        <button
+          onClick={() => setShowTable(!showTable)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+            showTable 
+              ? 'bg-green-700 text-white' 
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
+        >
+          <Package className="h-4 w-4" />
+          View Data
+        </button>
               <button
                 onClick={() => setShowImportModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -571,8 +591,9 @@ export function OTCInterface() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      {/* Filters - Only show when table is visible */}
+      {showTable && (
+        <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="space-y-4">
             {/* First row - Search and basic filters */}
@@ -655,8 +676,10 @@ export function OTCInterface() {
           </div>
         </div>
       </div>
+      )}
 
-      {/* Orders Table */}
+      {/* Orders Table - Only show when table is visible */}
+      {showTable && (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
@@ -807,6 +830,23 @@ export function OTCInterface() {
           </div>
         </div>
       </div>
+      )}
+
+      {/* Information Panel - Show when table is not visible */}
+      {!showTable && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+            <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Data Table Hidden</h3>
+            <p className="text-gray-600 mb-4">
+              The data table is currently hidden. Click "View Data" to see the order details table.
+            </p>
+            <p className="text-sm text-gray-500">
+              Only analytics are displayed by default to provide a clean overview of your OTC data.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Import CSV Modal */}
       {showImportModal && (

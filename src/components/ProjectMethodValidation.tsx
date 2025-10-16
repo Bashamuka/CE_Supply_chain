@@ -156,13 +156,13 @@ export function ProjectMethodValidation({ projectId, onValidationChange }: Proje
                 Ce projet utilise les deux méthodes de calcul simultanément. Cela peut causer des incohérences dans les calculs.
               </p>
               <div className="flex gap-2">
-                <Link
-                  to="/project-calculation-settings"
+                <button
+                  onClick={() => window.location.reload()}
                   className="inline-flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors"
                 >
                   <Settings className="h-3 w-3" />
-                  Configurer la méthode
-                </Link>
+                  Actualiser la page
+                </button>
               </div>
             </div>
           )}

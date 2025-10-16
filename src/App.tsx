@@ -13,7 +13,6 @@ import { ProjectDetailsInterface } from './components/ProjectDetailsInterface';
 import { ProjectAnalyticsView } from './components/ProjectAnalyticsView';
 import { ProjectComparativeDashboard } from './components/ProjectComparativeDashboard';
 import { DealerForwardPlanningInterface } from './components/DealerForwardPlanningInterface';
-import { ProjectCalculationSettings } from './components/ProjectCalculationSettings';
 import { OTCInterface } from './components/OTCInterface';
 import AdminInterface from './components/AdminInterface';
 import ProtectedModule from './components/ProtectedModule';
@@ -155,11 +154,6 @@ function App() {
           <Route path="/dealer-forward-planning" element={
             <ProtectedModule moduleName="dealer_forward_planning" moduleLabel="Dealer Forward Planning">
               <DealerForwardPlanningInterface />
-            </ProtectedModule>
-          } />
-          <Route path="/project-calculation-settings" element={
-            <ProtectedModule moduleName="projects" moduleLabel="Project Calculation Settings">
-              <ProjectCalculationSettings />
             </ProtectedModule>
           } />
           <Route path="/otc" element={

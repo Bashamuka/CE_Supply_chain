@@ -286,39 +286,6 @@ export function Dashboard() {
           })}
         </div>
 
-        {/* Project Management Settings Section */}
-        {hasAccess('projects') && (
-          <div className="mt-8 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl shadow-lg p-8">
-            <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-[#1A1A1A] mb-2 flex items-center justify-center gap-2">
-                <FolderKanban className="h-6 w-6 text-purple-600" />
-                Project Management Settings
-              </h2>
-              <p className="text-gray-600">Configure calculation methods for project analytics</p>
-            </div>
-            
-            <div className="flex justify-center">
-              <Link
-                to="/project-calculation-settings"
-                className="group flex items-center gap-3 px-6 py-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
-              >
-                <div className="bg-purple-100 rounded-lg p-2 group-hover:scale-110 transition-transform duration-300">
-                  <Package2 className="h-5 w-5 text-purple-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-semibold text-[#1A1A1A] group-hover:text-purple-600 transition-colors">
-                    Calculation Settings
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Switch between OR-based and OTC-based calculations
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all duration-300" />
-              </Link>
-            </div>
-          </div>
-        )}
-
         {/* Stats Section */}
         <div className="mt-16 bg-white rounded-2xl shadow-lg p-8">
           <div className="text-center mb-8">

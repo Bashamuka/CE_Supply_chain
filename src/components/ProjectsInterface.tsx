@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, CreditCard as Edit2, Trash2, Eye, Calendar, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, CreditCard as Edit2, Trash2, Eye, Calendar, Loader2, Settings } from 'lucide-react';
 import { useProjectsStore } from '../store/projectsStore';
 import { useUserStore } from '../store/userStore';
 import { useAdminStore } from '../store/adminStore';
@@ -159,15 +159,24 @@ export function ProjectsInterface() {
               <h1 className="text-3xl font-bold text-gray-900">Project Management</h1>
               <p className="text-gray-600 mt-2">Create and track your machine projects</p>
             </div>
-            {isAdmin && (
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            <div className="flex gap-3">
+              <Link
+                to="/project-calculation-settings"
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
-                <Plus className="h-5 w-5" />
-                New Project
-              </button>
-            )}
+                <Settings className="h-5 w-5" />
+                Calculation Settings
+              </Link>
+              {isAdmin && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Plus className="h-5 w-5" />
+                  New Project
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -176,6 +185,53 @@ export function ProjectsInterface() {
             <p className="text-red-800">{error}</p>
           </div>
         )}
+
+        {/* Calculation Methods Information */}
+        <div className="mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-6 border border-purple-200">
+          <div className="flex items-center gap-3 mb-4">
+            <Settings className="h-6 w-6 text-purple-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Calculation Methods</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <h3 className="font-semibold text-gray-900">OR-Based Calculation</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-2">
+                Uses Operational Requests (ORs) to calculate used quantities.
+              </p>
+              <ul className="text-xs text-gray-500 space-y-1">
+                <li>• Based on orders table (qte_livree)</li>
+                <li>• Machine-specific calculation</li>
+                <li>• Traditional method</li>
+              </ul>
+            </div>
+            <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                <h3 className="font-semibold text-gray-900">OTC-Based Calculation</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-2">
+                Uses Delivery Notes (BLs) from OTC module to calculate used quantities.
+              </p>
+              <ul className="text-xs text-gray-500 space-y-1">
+                <li>• Based on otc_orders table (qte_livree)</li>
+                <li>• Project-level cumulative calculation</li>
+                <li>• No duplication across machines</li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-4 text-center">
+            <Link
+              to="/project-calculation-settings"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+            >
+              <Settings className="h-4 w-4" />
+              Configure Calculation Methods
+            </Link>
+          </div>
+        </div>
 
         {isLoading || loadingAccess ? (
           <div className="flex justify-center items-center h-64">

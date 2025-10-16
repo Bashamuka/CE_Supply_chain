@@ -2,6 +2,7 @@ import React, { useCallback, useState, useRef } from 'react';
 import { Upload, Loader2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useUserStore } from '../store/userStore';
+import { ImportReportDisplay } from './ImportReportDisplay';
 
 // Fonction pour valider le format de date français DD/MM/YYYY ou DD-MM-YYYY
 const isValidFrenchDate = (dateString: string): boolean => {
@@ -50,6 +51,22 @@ interface ImportProgress {
   estimatedTimeRemaining: number;
 }
 
+interface ImportReport {
+  totalRowsImported: number;
+  analyzedRows: number;
+  columnMappingIssues: Array<{
+    column: string;
+    issue: string;
+    count: number;
+    examples: string[];
+  }>;
+  suspiciousValues: Array<{
+    value: string;
+    columns: string[];
+    count: number;
+  }>;
+}
+
 interface CSVImporterProps {
   tableName: string;
   headerMap: { [key: string]: string };
@@ -69,6 +86,7 @@ export function CSVImporter({
 }: CSVImporterProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState<ImportProgress | null>(null);
+  const [importReport, setImportReport] = useState<ImportReport | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const user = useUserStore((state) => state.user);
 
@@ -93,6 +111,219 @@ export function CSVImporter({
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}m ${remainingSeconds}s`;
+  };
+
+  const generateImportReport = async (totalRows: number): Promise<ImportReport> => {
+    try {
+      // Analyser TOUTES les données importées pour détecter les problèmes de mapping
+      console.log('Analyse de toutes les données de la table parts...');
+      
+      const { data: analysisData, error } = await supabase
+        .from('parts')
+        .select(`
+          order_number, supplier_order, part_ordered, part_delivered, description,
+          quantity_requested, invoice_quantity, qty_received_irium, status, cd_lta,
+          eta, date_cf, invoice_number, actual_position, operator_name, po_customer,
+          comments, prim_pso, order_type, cat_ticket_id, ticket_status, ship_by_date, customer_name
+        `);
+        // Pas de limite - analyser toutes les lignes
+
+      if (error) {
+        console.error('Erreur lors de l\'analyse:', error);
+        return {
+          totalRowsImported: totalRows,
+          analyzedRows: 0,
+          columnMappingIssues: [],
+          suspiciousValues: []
+        };
+      }
+
+      const report = {
+        totalRowsImported: totalRows,
+        analyzedRows: analysisData?.length || 0,
+        columnMappingIssues: [] as Array<{
+          column: string;
+          issue: string;
+          count: number;
+          examples: string[];
+        }>,
+        suspiciousValues: [] as Array<{
+          value: string;
+          columns: string[];
+          count: number;
+        }>
+      };
+
+      console.log(`Analyse de ${report.analyzedRows} lignes...`);
+
+      // Définir les colonnes attendues et leurs types de données typiques
+      const expectedColumns = [
+        { name: 'order_number', type: 'string', shouldContain: ['numbers', 'letters'] },
+        { name: 'supplier_order', type: 'string', shouldContain: ['numbers', 'letters'] },
+        { name: 'part_ordered', type: 'string', shouldContain: ['numbers', 'letters', 'dashes'] },
+        { name: 'part_delivered', type: 'string', shouldContain: ['numbers', 'letters', 'dashes'] },
+        { name: 'description', type: 'string', shouldContain: ['text', 'words'] },
+        { name: 'quantity_requested', type: 'number', shouldContain: ['numbers'] },
+        { name: 'invoice_quantity', type: 'number', shouldContain: ['numbers'] },
+        { name: 'qty_received_irium', type: 'number', shouldContain: ['numbers'] },
+        { name: 'status', type: 'string', shouldContain: ['status_words'] },
+        { name: 'cd_lta', type: 'string', shouldContain: ['letters', 'numbers'] },
+        { name: 'eta', type: 'date', shouldContain: ['dates'] },
+        { name: 'date_cf', type: 'date', shouldContain: ['dates'] },
+        { name: 'invoice_number', type: 'string', shouldContain: ['numbers', 'letters'] },
+        { name: 'actual_position', type: 'string', shouldContain: ['text'] },
+        { name: 'operator_name', type: 'string', shouldContain: ['names'] },
+        { name: 'po_customer', type: 'string', shouldContain: ['numbers', 'letters'] },
+        { name: 'comments', type: 'string', shouldContain: ['text'] },
+        { name: 'prim_pso', type: 'string', shouldContain: ['letters', 'numbers'] },
+        { name: 'order_type', type: 'string', shouldContain: ['type_words'] },
+        { name: 'cat_ticket_id', type: 'string', shouldContain: ['numbers', 'letters'] },
+        { name: 'ticket_status', type: 'string', shouldContain: ['status_words'] },
+        { name: 'ship_by_date', type: 'date', shouldContain: ['dates'] },
+        { name: 'customer_name', type: 'string', shouldContain: ['names', 'text'] }
+      ];
+
+      // Analyser chaque colonne pour détecter les problèmes de mapping
+      for (const columnDef of expectedColumns) {
+        const columnName = columnDef.name;
+        let emptyCount = 0;
+        let invalidTypeCount = 0;
+        const nonEmptyValues: string[] = [];
+        const invalidValues: string[] = [];
+
+        for (const row of analysisData || []) {
+          const value = row[columnName];
+          
+          if (!value || (typeof value === 'string' && value.trim() === '')) {
+            emptyCount++;
+          } else {
+            const stringValue = String(value);
+            if (nonEmptyValues.length < 10) {
+              nonEmptyValues.push(stringValue);
+            }
+            
+            // Vérifier le type de données selon la colonne
+            let isValidType = true;
+            
+            if (columnDef.type === 'number') {
+              const numValue = parseFloat(stringValue.replace(/,/g, ''));
+              if (isNaN(numValue)) {
+                isValidType = false;
+                invalidTypeCount++;
+                if (invalidValues.length < 5) {
+                  invalidValues.push(stringValue);
+                }
+              }
+            } else if (columnDef.type === 'date') {
+              // Vérifier si c'est une date valide (format DD/MM/YYYY ou DD-MM-YYYY)
+              const dateRegex = /^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/;
+              if (!dateRegex.test(stringValue.trim())) {
+                isValidType = false;
+                invalidTypeCount++;
+                if (invalidValues.length < 5) {
+                  invalidValues.push(stringValue);
+                }
+              }
+            }
+          }
+        }
+
+        const totalRows = analysisData?.length || 0;
+        const nonEmptyRows = totalRows - emptyCount;
+        
+        // Détecter les problèmes de mapping
+        if (emptyCount > totalRows * 0.9) { // Plus de 90% de valeurs vides
+          report.columnMappingIssues.push({
+            column: columnName,
+            issue: `Colonne probablement vide ou mal mappée (${emptyCount}/${totalRows} valeurs vides)`,
+            count: emptyCount,
+            examples: nonEmptyValues.slice(0, 3)
+          });
+        } else if (invalidTypeCount > nonEmptyRows * 0.5) { // Plus de 50% de valeurs de type incorrect
+          report.columnMappingIssues.push({
+            column: columnName,
+            issue: `Type de données incorrect (${invalidTypeCount}/${nonEmptyRows} valeurs invalides pour ${columnDef.type})`,
+            count: invalidTypeCount,
+            examples: invalidValues.slice(0, 3)
+          });
+        }
+      }
+
+      // Détecter les décalages de colonnes en analysant les patterns
+      // Si une colonne contient des données qui semblent appartenir à une autre colonne
+      const columnPatterns = {
+        'order_number': /^[A-Z0-9\-]+$/i,
+        'supplier_order': /^[A-Z0-9\-]+$/i,
+        'part_ordered': /^[A-Z0-9\-\.]+$/i,
+        'quantity_requested': /^\d+(\.\d+)?$/,
+        'invoice_quantity': /^\d+(\.\d+)?$/,
+        'qty_received_irium': /^\d+(\.\d+)?$/,
+        'status': /^(Delivered|In Transit|Backorder|Pending|Completed)$/i,
+        'eta': /^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/,
+        'date_cf': /^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/,
+        'ship_by_date': /^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/
+      };
+
+      for (const [columnName, pattern] of Object.entries(columnPatterns)) {
+        let mismatchCount = 0;
+        const mismatchExamples: string[] = [];
+        
+        for (const row of analysisData || []) {
+          const value = row[columnName];
+          if (value && typeof value === 'string' && value.trim() !== '') {
+            if (!pattern.test(value.trim())) {
+              mismatchCount++;
+              if (mismatchExamples.length < 3) {
+                mismatchExamples.push(value.trim());
+              }
+            }
+          }
+        }
+        
+        const totalNonEmpty = (analysisData || []).filter(row => 
+          row[columnName] && typeof row[columnName] === 'string' && row[columnName].trim() !== ''
+        ).length;
+        
+        if (mismatchCount > totalNonEmpty * 0.3) { // Plus de 30% de valeurs ne correspondent pas au pattern
+          report.columnMappingIssues.push({
+            column: columnName,
+            issue: `Format de données incorrect (${mismatchCount}/${totalNonEmpty} valeurs ne correspondent pas au format attendu)`,
+            count: mismatchCount,
+            examples: mismatchExamples
+          });
+        }
+      }
+
+      // Afficher le rapport dans la console
+      console.log('=== RAPPORT D\'IMPORT PARTS ===');
+      console.log(`Total lignes importées: ${report.totalRowsImported}`);
+      console.log(`Lignes analysées: ${report.analyzedRows}`);
+      
+      if (report.columnMappingIssues.length > 0) {
+        console.log('\n❌ PROBLÈMES DE MAPPING DÉTECTÉS:');
+        for (const issue of report.columnMappingIssues) {
+          console.log(`  Colonne "${issue.column}": ${issue.issue}`);
+          if (issue.examples.length > 0) {
+            console.log(`    Exemples: ${issue.examples.join(', ')}`);
+          }
+        }
+      } else {
+        console.log('\n✅ IMPORT RÉUSSI - Aucun problème de mapping détecté');
+        console.log('Toutes les colonnes sont correctement mappées');
+      }
+
+      console.log('=== FIN DU RAPPORT ===');
+
+      return report;
+    } catch (error) {
+      console.error('Erreur lors de la génération du rapport:', error);
+      return {
+        totalRowsImported: totalRows,
+        analyzedRows: 0,
+        columnMappingIssues: [],
+        suspiciousValues: []
+      };
+    }
   };
 
   const updateProgress = (currentProgress: Partial<ImportProgress>) => {
@@ -120,6 +351,11 @@ export function CSVImporter({
     let current = '';
     let inQuotes = false;
     
+    // Détecter le délimiteur principal (virgule ou point-virgule)
+    const commaCount = (line.match(/,/g) || []).length;
+    const semicolonCount = (line.match(/;/g) || []).length;
+    const delimiter = commaCount > semicolonCount ? ',' : ';';
+    
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
       
@@ -130,7 +366,7 @@ export function CSVImporter({
         } else {
           inQuotes = !inQuotes;
         }
-      } else if ((char === ',' || char === ';') && !inQuotes) {
+      } else if (char === delimiter && !inQuotes) {
         result.push(current.trim());
         current = '';
       } else {
@@ -139,10 +375,77 @@ export function CSVImporter({
     }
     
     result.push(current.trim());
+    
+    // Pour la table parts, s'assurer qu'on a le bon nombre de colonnes
+    if (tableName === 'parts' && result.length !== 23) {
+      console.warn(`Nombre de colonnes incorrect pour parts: ${result.length} au lieu de 23`);
+      // Ajuster le nombre de colonnes si nécessaire
+      while (result.length < 23) {
+        result.push('');
+      }
+      if (result.length > 23) {
+        result.splice(23);
+      }
+    }
+    
     return result;
   };
 
   const validateHeaders = (headers: string[]): string[] => {
+    const validatedHeaders: string[] = [];
+    const missingHeaders: string[] = [];
+    const invalidHeaders: string[] = [];
+    
+    // Pour la table parts, nous devons avoir un mapping strict
+    if (tableName === 'parts') {
+      // Définir l'ordre attendu des colonnes pour la table parts
+      const expectedColumns = [
+        'order_number', 'supplier_order', 'part_ordered', 'part_delivered', 'description',
+        'quantity_requested', 'invoice_quantity', 'qty_received_irium', 'status', 'cd_lta',
+        'eta', 'date_cf', 'invoice_number', 'actual_position', 'operator_name', 'po_customer',
+        'comments', 'prim_pso', 'order_type', 'cat_ticket_id', 'ticket_status', 'ship_by_date', 'customer_name'
+      ];
+      
+      // Créer un mapping strict basé sur la position
+      for (let i = 0; i < headers.length; i++) {
+        const header = headers[i];
+        const normalizedHeader = header.toLowerCase().trim();
+        const mappedColumn = headerMap[normalizedHeader];
+        
+        if (mappedColumn) {
+          validatedHeaders.push(mappedColumn);
+        } else {
+          // Si le header n'est pas reconnu, utiliser la position pour mapper
+          if (i < expectedColumns.length) {
+            validatedHeaders.push(expectedColumns[i]);
+            invalidHeaders.push(`"${header}" -> "${expectedColumns[i]}"`);
+          } else {
+            validatedHeaders.push(`unknown_column_${i}`);
+            invalidHeaders.push(`"${header}" -> "unknown_column_${i}"`);
+          }
+        }
+      }
+      
+      // Vérifier les colonnes manquantes
+      const mappedColumns = new Set(validatedHeaders);
+      for (const expectedCol of expectedColumns) {
+        if (!mappedColumns.has(expectedCol)) {
+          missingHeaders.push(expectedCol);
+        }
+      }
+      
+      // Afficher les avertissements
+      if (invalidHeaders.length > 0) {
+        console.warn('Headers non reconnus mappés par position:', invalidHeaders);
+      }
+      if (missingHeaders.length > 0) {
+        console.warn('Colonnes attendues manquantes:', missingHeaders);
+      }
+      
+      return validatedHeaders;
+    }
+    
+    // Pour les autres tables, utiliser l'ancien comportement
     return headers.map(header => {
       const normalizedHeader = header.toLowerCase().trim();
       return headerMap[normalizedHeader] || normalizedHeader;
@@ -369,6 +672,12 @@ export function CSVImporter({
         }
       }
 
+      // Pour la table parts, générer un rapport de validation
+      if (tableName === 'parts') {
+        const report = await generateImportReport(processedRows);
+        setImportReport(report);
+      }
+      
       onImportComplete?.(processedRows);
     } catch (error) {
       console.error('Detailed error:', error);
@@ -474,6 +783,14 @@ export function CSVImporter({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Affichage du rapport d'import pour la table parts */}
+      {importReport && (
+        <ImportReportDisplay
+          report={importReport}
+          onClose={() => setImportReport(null)}
+        />
       )}
     </div>
   );

@@ -1,0 +1,4 @@
+Order Number,Supplier Order,Part Ordered,Part Delivered,Description,Quantity Requested,Invoice Quantity,Qty Received Irium,Status,CD LTA,ETA,Date CF,Invoice Number,Actual Position,Operator Name,PO Customer,Comments,Prim PSO,Order Type,CAT Ticket ID,Ticket Status,Ship By Date,Customer Name
+12345,SUP001,PART001,PART001_DEL,Description of part 1,10,10,8,Delivered,CD001,15/12/2024,10/12/2024,INV001,Position A,John Doe,PO001,No issues,PSO001,Standard,TICKET001,Completed,20/12/2024,Customer A
+12346,SUP002,PART002,PART002_DEL,Description of part 2,5,5,3,In Transit,CD002,20/12/2024,15/12/2024,INV002,Position B,Jane Smith,PO002,Minor delay,PSO002,Urgent,TICKET002,In Progress,25/12/2024,Customer B
+12347,SUP003,PART003,,Description of part 3,15,15,0,Backorder,CD003,30/12/2024,25/12/2024,INV003,Position C,Bob Johnson,PO003,Supplier delay,PSO003,Standard,TICKET003,Pending,05/01/2025,Customer C

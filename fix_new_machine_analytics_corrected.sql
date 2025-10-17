@@ -1,5 +1,5 @@
--- Script pour corriger le problème des analytics à 0% pour les nouvelles machines
--- Ce script force le rafraîchissement des vues matérialisées et vérifie les données
+-- Script simplifié pour corriger le problème des analytics à 0% pour les nouvelles machines
+-- Version corrigée sans erreurs de syntaxe PostgreSQL
 
 DO $$
 DECLARE

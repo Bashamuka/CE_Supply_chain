@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Download, Loader2, AlertTriangle, CheckCircle, Clock, Package, RefreshCw } from 'lucide-react';
 import { useProjectsStore } from '../store/projectsStore';
+import { supabase } from '../lib/supabase';
 import * as XLSX from 'xlsx';
 
 const formatEtaDate = (etaString: string): string => {
@@ -85,6 +86,44 @@ export function ProjectAnalyticsView() {
     };
     loadAnalytics();
   }, [projectId, fetchProjectById, calculateProjectAnalytics, refreshAnalyticsViews]);
+
+  // Effet pour détecter les nouvelles machines et forcer le rafraîchissement
+  useEffect(() => {
+    const checkForNewMachines = async () => {
+      if (projectId && analytics) {
+        // Vérifier si le nombre de machines a changé
+        const { data: currentMachines, error } = await supabase
+          .from('project_machines')
+          .select('id, name, created_at')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.error('Error checking machines:', error);
+          return;
+        }
+
+        const currentMachineCount = currentMachines?.length || 0;
+        const analyticsMachineCount = analytics.machines.length;
+
+        // Si le nombre de machines a changé, rafraîchir les analytics
+        if (currentMachineCount !== analyticsMachineCount) {
+          console.log(`Machine count changed: ${analyticsMachineCount} -> ${currentMachineCount}. Refreshing analytics...`);
+          try {
+            await refreshAnalyticsViews();
+            await calculateProjectAnalytics(projectId);
+          } catch (error) {
+            console.error('Failed to refresh analytics for new machines:', error);
+          }
+        }
+      }
+    };
+
+    // Vérifier toutes les 5 secondes si de nouvelles machines ont été ajoutées
+    const interval = setInterval(checkForNewMachines, 5000);
+    
+    return () => clearInterval(interval);
+  }, [projectId, analytics, refreshAnalyticsViews, calculateProjectAnalytics]);
 
   useEffect(() => {
     if (analytics && analytics.machines.length > 0 && !selectedMachineId) {

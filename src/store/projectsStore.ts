@@ -555,9 +555,9 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
 
   refreshAnalyticsViews: async () => {
     try {
-      // Try to refresh the views using the RPC function
-      const { error } = await supabase
-        .rpc('refresh_project_analytics_views', {});
+      // Utiliser la fonction RPC robuste
+      const { data, error } = await supabase
+        .rpc('refresh_project_analytics_views_robust');
       
       if (error) {
         console.warn('RPC refresh failed, trying manual refresh:', error.message);
@@ -566,13 +566,12 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
         const viewsToRefresh = [
           'mv_project_machine_parts_aggregated',
           'mv_project_parts_stock_availability', 
-          'mv_project_parts_used_quantities',
-          'mv_project_parts_used_quantities_otc',
           'mv_project_parts_used_quantities_enhanced',
           'mv_project_parts_transit_invoiced',
           'mv_project_analytics_complete'
         ];
 
+        let refreshCount = 0;
         for (const viewName of viewsToRefresh) {
           try {
             const { error: viewError } = await supabase
@@ -582,18 +581,19 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
             
             if (viewError) {
               console.warn(`View ${viewName} might not exist or be accessible:`, viewError.message);
+            } else {
+              refreshCount++;
             }
           } catch (viewErr) {
             console.warn(`Error checking view ${viewName}:`, viewErr);
           }
         }
         
-        // If we get here, the manual refresh completed (even if some views failed)
-        console.log('Manual refresh completed');
+        console.log(`Manual refresh completed: ${refreshCount}/${viewsToRefresh.length} views accessible`);
         return;
       }
       
-      console.log('RPC refresh completed successfully');
+      console.log('RPC refresh completed successfully:', data);
     } catch (error) {
       console.error('Error refreshing analytics views:', error);
       // Don't throw the error, just log it and continue

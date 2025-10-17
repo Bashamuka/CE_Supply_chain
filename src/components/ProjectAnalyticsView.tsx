@@ -143,9 +143,11 @@ export function ProjectAnalyticsView() {
     setIsRefreshing(true);
     setRefreshMessage(null);
     try {
+      console.log('Starting analytics refresh...');
       await refreshAnalyticsViews();
+      console.log('Views refreshed, calculating analytics...');
       await calculateProjectAnalytics(projectId);
-      setRefreshMessage({ type: 'success', text: 'Data refreshed successfully!' });
+      setRefreshMessage({ type: 'success', text: 'Data refreshed successfully! Analytics updated.' });
     } catch (error) {
       console.error('Refresh error:', error);
       // Only show error if we don't have any analytics data

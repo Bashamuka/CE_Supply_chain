@@ -192,6 +192,12 @@ DECLARE
     rec RECORD;
     test_project_id UUID;
     test_part_number TEXT;
+    total_transit_shown INTEGER;
+    machine_count INTEGER;
+    sum_transit INTEGER;
+    sum_invoiced INTEGER;
+    total_transit_available INTEGER;
+    total_invoiced_available INTEGER;
 BEGIN
     RAISE NOTICE '✅ Vue créée avec allocation progressive';
     RAISE NOTICE '';
@@ -204,7 +210,7 @@ BEGIN
         part_number,
         SUM(quantity_in_transit) as total_transit_shown,
         COUNT(*) as machine_count
-    INTO test_project_id, test_part_number, rec
+    INTO test_project_id, test_part_number, total_transit_shown, machine_count
     FROM mv_project_analytics_complete
     WHERE quantity_in_transit > 0
     GROUP BY project_id, part_number
@@ -215,8 +221,8 @@ BEGIN
         RAISE NOTICE '🔍 Exemple trouvé:';
         RAISE NOTICE '   Project ID: %', test_project_id;
         RAISE NOTICE '   Part Number: %', test_part_number;
-        RAISE NOTICE '   Total Transit Affiché: %', rec.total_transit_shown;
-        RAISE NOTICE '   Nombre de Machines: %', rec.machine_count;
+        RAISE NOTICE '   Total Transit Affiché: %', total_transit_shown;
+        RAISE NOTICE '   Nombre de Machines: %', machine_count;
         RAISE NOTICE '';
         
         RAISE NOTICE '📊 Allocation par machine:';
@@ -248,28 +254,28 @@ BEGIN
         SELECT 
             SUM(quantity_in_transit) as sum_transit,
             SUM(quantity_invoiced) as sum_invoiced
-        INTO rec
+        INTO sum_transit, sum_invoiced
         FROM mv_project_analytics_complete
         WHERE project_id = test_project_id
           AND part_number = test_part_number;
         
         RAISE NOTICE '✅ Vérification de cohérence:';
-        RAISE NOTICE '   Somme In Transit: %', rec.sum_transit;
-        RAISE NOTICE '   Somme Invoiced: %', rec.sum_invoiced;
+        RAISE NOTICE '   Somme In Transit: %', sum_transit;
+        RAISE NOTICE '   Somme Invoiced: %', sum_invoiced;
         
         -- Récupérer la quantité totale depuis la vue transit
         SELECT 
             quantity_in_transit as total_transit_available,
             quantity_invoiced as total_invoiced_available
-        INTO rec
+        INTO total_transit_available, total_invoiced_available
         FROM mv_project_parts_transit_invoiced
         WHERE project_id = test_project_id
           AND part_number = test_part_number;
         
-        RAISE NOTICE '   Total Disponible In Transit: %', rec.total_transit_available;
-        RAISE NOTICE '   Total Disponible Invoiced: %', rec.total_invoiced_available;
+        RAISE NOTICE '   Total Disponible In Transit: %', total_transit_available;
+        RAISE NOTICE '   Total Disponible Invoiced: %', total_invoiced_available;
         
-        IF rec.sum_transit <= rec.total_transit_available AND rec.sum_invoiced <= rec.total_invoiced_available THEN
+        IF sum_transit <= total_transit_available AND sum_invoiced <= total_invoiced_available THEN
             RAISE NOTICE '✅ Allocation cohérente: Les sommes ne dépassent pas les totaux disponibles';
         ELSE
             RAISE NOTICE '⚠️  Allocation incohérente: Les sommes dépassent les totaux disponibles';

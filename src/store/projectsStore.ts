@@ -670,9 +670,34 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
       const machinesMap = new Map<string, MachineAnalytics>();
 
       for (const machine of machines) {
-        const machineParts = analyticsData?.filter(d => d.machine_id === machine.id) || [];
+        type AnalyticsRow = {
+          machine_id: string;
+          part_number: string;
+          description?: string | null;
+          quantity_required: number;
+          quantity_available: number;
+          quantity_used: number;
+          quantity_in_transit: number;
+          quantity_invoiced: number;
+          quantity_missing: number;
+          latest_eta?: string | null;
+        };
 
-        const partsDetails = machineParts.map(p => ({
+        type PartDetail = {
+          part_number: string;
+          description: string;
+          quantity_required: number;
+          quantity_available: number;
+          quantity_used: number;
+          quantity_in_transit: number;
+          quantity_invoiced: number;
+          quantity_missing: number;
+          latest_eta?: string;
+        };
+
+        const machineParts: AnalyticsRow[] = (analyticsData?.filter(d => d.machine_id === machine.id) || []) as AnalyticsRow[];
+
+        const partsDetails: PartDetail[] = machineParts.map((p: AnalyticsRow): PartDetail => ({
           part_number: p.part_number,
           description: p.description || '',
           quantity_required: Number(p.quantity_required) || 0,
@@ -684,6 +709,15 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
           latest_eta: p.latest_eta || undefined
         }));
 
+        // Ensure parts are unique by part_number (no aggregation, keep first occurrence)
+        const uniquePartsDetails: PartDetail[] = [];
+        const seenPartNumbers = new Set<string>();
+        for (const part of partsDetails) {
+          if (seenPartNumbers.has(part.part_number)) continue;
+          seenPartNumbers.add(part.part_number);
+          uniquePartsDetails.push(part);
+        }
+
         // Calculate percentages part by part, capping each at 100%
         let totalAvailabilityPercent = 0;
         let totalUsagePercent = 0;
@@ -691,7 +725,7 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
         let totalInvoicedPercent = 0;
         let totalMissingPercent = 0;
 
-        for (const part of partsDetails) {
+        for (const part of uniquePartsDetails) {
           if (part.quantity_required > 0) {
             // Cap each metric at 100% of what's required for this part
             totalAvailabilityPercent += Math.min(100, (part.quantity_available / part.quantity_required) * 100);
@@ -703,7 +737,7 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
         }
 
         // Average the percentages across all parts
-        const numParts = partsDetails.length;
+        const numParts = uniquePartsDetails.length;
         const machineAnalytic: MachineAnalytics = {
           machine_id: machine.id,
           machine_name: machine.name,
@@ -713,7 +747,7 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
           transit_percentage: numParts > 0 ? totalTransitPercent / numParts : 0,
           invoiced_percentage: numParts > 0 ? totalInvoicedPercent / numParts : 0,
           missing_percentage: numParts > 0 ? totalMissingPercent / numParts : 0,
-          parts_details: partsDetails
+          parts_details: uniquePartsDetails
         };
 
         machineAnalytics.push(machineAnalytic);
@@ -737,6 +771,9 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
           if (existing) {
             existing.quantity_required += part.quantity_required;
             existing.quantity_used += part.quantity_used;
+            existing.quantity_available += part.quantity_available;
+            existing.quantity_in_transit += part.quantity_in_transit;
+            existing.quantity_invoiced += part.quantity_invoiced;
           } else {
             globalPartsMap.set(part.part_number, {
               quantity_required: part.quantity_required,
@@ -751,7 +788,7 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
       }
 
       // Calculate missing quantities
-      for (const [partNumber, quantities] of globalPartsMap.entries()) {
+      for (const [_partNumber, quantities] of globalPartsMap.entries()) {
         quantities.quantity_missing = Math.max(0,
           quantities.quantity_required -
           quantities.quantity_available -
@@ -768,7 +805,7 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
       let overallInvoicedPercent = 0;
       let overallMissingPercent = 0;
 
-      for (const [partNumber, quantities] of globalPartsMap.entries()) {
+      for (const [_partNumber, quantities] of globalPartsMap.entries()) {
         if (quantities.quantity_required > 0) {
           // Cap each part's contribution at 100%
           overallAvailabilityPercent += Math.min(100, (quantities.quantity_available / quantities.quantity_required) * 100);

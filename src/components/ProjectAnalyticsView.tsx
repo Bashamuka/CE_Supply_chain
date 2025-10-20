@@ -249,6 +249,8 @@ export function ProjectAnalyticsView() {
       ];
 
       machine.parts_details.forEach(part => {
+        const shouldShowEta = (part.quantity_in_transit > 0 || part.quantity_invoiced > 0);
+        const etaValue = shouldShowEta ? formatEtaDate(part.latest_eta || '') : '-';
         machineData.push([
           part.part_number,
           part.description || '-',
@@ -258,7 +260,7 @@ export function ProjectAnalyticsView() {
           part.quantity_in_transit,
           part.quantity_invoiced,
           part.quantity_missing,
-          formatEtaDate(part.latest_eta || '')
+          etaValue
         ]);
       });
 
@@ -707,9 +709,15 @@ export function ProjectAnalyticsView() {
                             </td>
                             <td className="px-4 py-3 text-center">
                               {(() => {
+                                // Hide ETA when both Backorders and In Transit are zero
+                                const hasRelevantFlow = (part.quantity_in_transit > 0 || part.quantity_invoiced > 0);
+                                if (!hasRelevantFlow) {
+                                  return <span className="text-gray-500">-</span>;
+                                }
+
                                 const eta = formatEtaDate(part.latest_eta || '');
                                 const shouldHaveEta = part.quantity_in_transit > 0 || part.quantity_missing > 0;
-                                
+
                                 if (eta === '-' && shouldHaveEta) {
                                   return (
                                     <span className="text-red-600 font-medium" title="ETA missing for part in transit/backorder">
@@ -717,7 +725,7 @@ export function ProjectAnalyticsView() {
                                     </span>
                                   );
                                 }
-                                
+
                                 return (
                                   <span className={eta === '-' ? 'text-gray-500' : 'text-gray-700'}>
                                     {eta}

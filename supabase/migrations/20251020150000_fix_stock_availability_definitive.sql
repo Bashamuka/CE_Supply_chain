@@ -50,5 +50,5 @@ CREATE UNIQUE INDEX idx_mv_stock_avail_unique ON mv_project_parts_stock_availabi
 CREATE INDEX idx_mv_stock_avail_project ON mv_project_parts_stock_availability(project_id);
 CREATE INDEX idx_mv_stock_avail_part ON mv_project_parts_stock_availability(part_number);
 
--- Refresh the complete analytics view to use the corrected stock availability
-REFRESH MATERIALIZED VIEW mv_project_analytics_complete;
+-- Note: mv_project_analytics_complete will be created by the previous migration
+-- This migration only fixes mv_project_parts_stock_availability

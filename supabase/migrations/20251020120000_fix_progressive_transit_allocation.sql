@@ -143,22 +143,22 @@ stock_need AS (
     ) as cum_need_after_stock_before
   FROM stock_step
 ),
-invoiced_step AS (
-  SELECT
-    *,
-    -- Step 2: Allocate from invoiced (In Transit) after stock
-    GREATEST(0, total_invoiced - COALESCE(cum_need_after_stock_before, 0)) as remaining_invoiced,
-    LEAST(need_after_stock, GREATEST(0, total_invoiced - COALESCE(cum_need_after_stock_before, 0))) as qty_from_invoiced,
-    GREATEST(0, need_after_stock - LEAST(need_after_stock, GREATEST(0, total_invoiced - COALESCE(cum_need_after_stock_before, 0)))) as need_after_invoiced
-  FROM stock_need
-),
 transit_step AS (
   SELECT
     *,
-    -- Step 3: Allocate from transit (Backorders) after invoiced
-    GREATEST(0, total_in_transit - GREATEST(0, COALESCE(cum_need_after_stock_before, 0) - total_invoiced)) as remaining_transit,
-    LEAST(need_after_invoiced, GREATEST(0, total_in_transit - GREATEST(0, COALESCE(cum_need_after_stock_before, 0) - total_invoiced))) as qty_from_transit
-  FROM invoiced_step
+    -- Step 2: Allocate from transit (Backorders) after stock
+    GREATEST(0, total_in_transit - COALESCE(cum_need_after_stock_before, 0)) as remaining_transit,
+    LEAST(need_after_stock, GREATEST(0, total_in_transit - COALESCE(cum_need_after_stock_before, 0))) as qty_from_transit,
+    GREATEST(0, need_after_stock - LEAST(need_after_stock, GREATEST(0, total_in_transit - COALESCE(cum_need_after_stock_before, 0)))) as need_after_transit
+  FROM stock_need
+),
+invoiced_step AS (
+  SELECT
+    *,
+    -- Step 3: Allocate from invoiced (In Transit) after transit
+    GREATEST(0, total_invoiced - GREATEST(0, COALESCE(cum_need_after_stock_before, 0) - total_in_transit)) as remaining_invoiced,
+    LEAST(need_after_transit, GREATEST(0, total_invoiced - GREATEST(0, COALESCE(cum_need_after_stock_before, 0) - total_in_transit))) as qty_from_invoiced
+  FROM transit_step
 )
 SELECT
   machine_id,
@@ -169,21 +169,21 @@ SELECT
   quantity_required,
   qty_from_stock as quantity_available,
   quantity_used,
-  qty_from_invoiced as quantity_in_transit,  -- In Transit (from invoiced)
-  qty_from_transit as quantity_invoiced,    -- Backorders (from transit)
+  qty_from_transit as quantity_in_transit,    -- Backorders (commandées pas facturées)
+  qty_from_invoiced as quantity_invoiced,     -- In Transit (facturées pas livrées)
   GREATEST(0, quantity_required - quantity_used - qty_from_stock - qty_from_transit - qty_from_invoiced) as quantity_missing,
   (
     SELECT MAX(p.eta)
     FROM project_supplier_orders pso
     JOIN parts p ON p.supplier_order = pso.supplier_order
-    WHERE pso.project_id = transit_step.project_id
-      AND p.part_ordered = transit_step.part_number
+    WHERE pso.project_id = invoiced_step.project_id
+      AND p.part_ordered = invoiced_step.part_number
       AND p.status NOT IN ('Griefed', 'Cancelled')
       AND LOWER(COALESCE(p.comments, '')) != 'delivery completed'
       AND p.eta IS NOT NULL
       AND p.eta != ''
   ) as latest_eta
-FROM transit_step;
+FROM invoiced_step;
 
 -- Keep indexes for performance
 CREATE UNIQUE INDEX idx_mv_analytics_unique ON mv_project_analytics_complete(project_id, machine_id, part_number);

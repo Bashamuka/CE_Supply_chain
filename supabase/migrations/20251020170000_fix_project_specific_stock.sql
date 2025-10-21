@@ -9,7 +9,8 @@
 */
 
 -- Drop and recreate mv_project_parts_stock_availability with project-specific logic
-DROP MATERIALIZED VIEW IF EXISTS mv_project_parts_stock_availability CASCADE;
+-- Note: We don't use CASCADE to avoid dropping dependent views
+DROP MATERIALIZED VIEW IF EXISTS mv_project_parts_stock_availability;
 
 CREATE MATERIALIZED VIEW mv_project_parts_stock_availability AS
 WITH global_stock AS (
@@ -87,3 +88,16 @@ FROM project_stock;
 CREATE UNIQUE INDEX idx_mv_stock_avail_unique ON mv_project_parts_stock_availability(project_id, part_number);
 CREATE INDEX idx_mv_stock_avail_project ON mv_project_parts_stock_availability(project_id);
 CREATE INDEX idx_mv_stock_avail_part ON mv_project_parts_stock_availability(part_number);
+
+-- Recreate mv_project_analytics_complete since it depends on mv_project_parts_stock_availability
+-- This will be done by applying the previous migration again or manually
+-- For now, just refresh if it exists
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_matviews WHERE matviewname = 'mv_project_analytics_complete') THEN
+        REFRESH MATERIALIZED VIEW mv_project_analytics_complete;
+        RAISE NOTICE 'mv_project_analytics_complete refreshed successfully';
+    ELSE
+        RAISE NOTICE 'mv_project_analytics_complete does not exist - please recreate it';
+    END IF;
+END $$;

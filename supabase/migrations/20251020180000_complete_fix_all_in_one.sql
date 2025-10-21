@@ -104,7 +104,17 @@ SELECT
   COALESCE(transit.quantity_in_transit, 0) as quantity_in_transit,
   COALESCE(transit.quantity_invoiced, 0) as quantity_invoiced,
   GREATEST(0, pmp.quantity_required - COALESCE(used.quantity_used, 0) - COALESCE(stock.quantity_available, 0) - COALESCE(transit.quantity_in_transit, 0) - COALESCE(transit.quantity_invoiced, 0)) as quantity_missing,
-  NULL::text as latest_eta
+  (
+    SELECT MAX(p.eta)
+    FROM project_supplier_orders pso
+    JOIN parts p ON p.supplier_order = pso.supplier_order
+    WHERE pso.project_id = pm.project_id
+      AND p.part_ordered = pmp.part_number
+      AND p.status NOT IN ('Griefed', 'Cancelled')
+      AND LOWER(COALESCE(p.comments, '')) != 'delivery completed'
+      AND p.eta IS NOT NULL
+      AND p.eta != ''
+  ) as latest_eta
 FROM mv_project_machine_parts_aggregated pmp
 JOIN project_machines pm ON pm.id = pmp.machine_id
 LEFT JOIN mv_project_parts_stock_availability stock ON stock.project_id = pm.project_id AND stock.part_number = pmp.part_number

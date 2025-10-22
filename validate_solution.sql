@@ -43,3 +43,4 @@ SELECT
 FROM stock_dispo 
 WHERE part_number = '4D4508'
 GROUP BY part_number;
+

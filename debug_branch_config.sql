@@ -7,3 +7,4 @@ FROM project_branches pb
 JOIN projects p ON p.id = pb.project_id
 WHERE p.name LIKE '%KCC%'
 ORDER BY pb.branch_code;
+

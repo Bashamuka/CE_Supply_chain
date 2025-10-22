@@ -23,3 +23,4 @@ SELECT
   -- Test de la vue actuelle
   (SELECT quantity_available FROM mv_project_parts_stock_availability WHERE project_id = test_data.project_id AND part_number = test_data.part_number) as view_result
 FROM test_data;
+

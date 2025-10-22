@@ -14,3 +14,4 @@ SELECT
 FROM mv_project_analytics_complete 
 WHERE part_number = '4D4508'
 ORDER BY creation_rank;
+

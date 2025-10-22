@@ -63,7 +63,7 @@ SELECT
   COALESCE(SUM(o.qte_livree), 0) as quantity_used
 FROM mv_project_machine_parts_aggregated pmp
 LEFT JOIN project_machine_order_numbers pmon ON pmon.machine_id = pmp.machine_id
-LEFT JOIN orders o ON o.or_num = pmon.order_number 
+LEFT JOIN orders o ON o.num_or = pmon.order_number 
   AND o.part_number = pmp.part_number
   AND o.qte_livree > 0
 GROUP BY pmp.machine_id, pmp.part_number;

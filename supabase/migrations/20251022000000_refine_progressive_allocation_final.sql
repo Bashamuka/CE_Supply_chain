@@ -146,14 +146,14 @@ SELECT
   -- Backorders = commandées mais non facturées (quantity_in_transit dans l'UI)
   COALESCE(SUM(
     CASE 
-      WHEN p.invoice_num IS NULL OR p.invoice_num = '' THEN p.quantity_ordered
+      WHEN p.invoice_number IS NULL OR p.invoice_number = '' THEN p.quantity_ordered
       ELSE 0
     END
   ), 0) as quantity_in_transit,
   -- In Transit = facturées mais non réceptionnées (quantity_invoiced dans l'UI)
   COALESCE(SUM(
     CASE 
-      WHEN p.invoice_num IS NOT NULL AND p.invoice_num != '' THEN p.quantity_ordered
+      WHEN p.invoice_number IS NOT NULL AND p.invoice_number != '' THEN p.quantity_ordered
       ELSE 0
     END
   ), 0) as quantity_invoiced

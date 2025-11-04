@@ -534,26 +534,26 @@ export function StockAvailabilityInterface() {
                     <td className="p-3 max-w-[200px] truncate" title={stock.description || '-'}>
                       {stock.description || '-'}
                     </td>
-                    <td className="p-3 text-center">{stock.qté_gdc || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_jdc || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_cat_network || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_10 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_20 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_11 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_12 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_13 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_14 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_19 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_21 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_22 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_24 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_30 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_40 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_50 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_60 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_70 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_80 || '0'}</td>
-                    <td className="p-3 text-center">{stock.qté_succ_90 || '0'}</td>
+                    <td className="p-3 text-center">{stock.qté_gdc ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_jdc ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_cat_network ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_10 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_20 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_11 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_12 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_13 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_14 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_19 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_21 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_22 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_24 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_30 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_40 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_50 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_60 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_70 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_80 ?? '-'}</td>
+                    <td className="p-3 text-center">{stock.qté_succ_90 ?? '-'}</td>
                   </tr>
                 ))}
               </tbody>

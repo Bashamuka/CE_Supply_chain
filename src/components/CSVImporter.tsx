@@ -495,7 +495,12 @@ export function CSVImporter({
         }
         // Handle numeric fields
         else if (header.startsWith('qté_') || header.startsWith('qte_') || header.includes('quantity') || header.includes('qty_')) {
-          record[header] = value ? parseFloat(value.replace(/\s/g, '')) || 0 : 0;
+          if (!value || value.trim() === '') {
+            record[header] = null;
+          } else {
+            const parsed = parseFloat(value.replace(/\s/g, ''));
+            record[header] = isNaN(parsed) ? null : parsed;
+          }
         } else {
           // Normalisation spécifique pour stock_dispo: part_number unique et sans casse/espaces
           if (tableName === 'stock_dispo' && header === 'part_number') {

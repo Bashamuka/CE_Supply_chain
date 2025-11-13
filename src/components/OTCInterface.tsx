@@ -49,7 +49,7 @@ export function OTCInterface() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedSuccursale, setSelectedSuccursale] = useState('all');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [showTable, setShowTable] = useState(true); // Tableau visible par défaut
+  const [showTable, setShowTable] = useState(false); // Tableau masqué par défaut - chargement à la demande
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState(false);
@@ -75,7 +75,7 @@ export function OTCInterface() {
   };
 
   useEffect(() => {
-    fetchOrders();
+    // Ne pas charger automatiquement - attendre l'action de l'utilisateur
   }, []);
 
   // Filter orders based on search criteria
@@ -340,6 +340,7 @@ export function OTCInterface() {
       alert(`${orders.length} commandes importées avec succès\n\n• Données existantes supprimées\n• Compteur ID réinitialisé à 1\n• Nouvelles données insérées\n• Dates converties du format DD/MM/YYYY vers YYYY-MM-DD`);
       setShowImportModal(false);
       setImportFile(null);
+      setShowTable(true); // Afficher le tableau après l'import
       fetchOrders(); // Refresh the data
 
     } catch (error) {
@@ -447,6 +448,22 @@ export function OTCInterface() {
               <p className="text-gray-600 mt-1">Comprehensive order management and tracking</p>
             </div>
       <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowTable(true);
+                  if (orders.length === 0) {
+                    fetchOrders();
+                  }
+                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  showTable 
+                    ? 'bg-green-700 text-white' 
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
+              >
+                <Package className="h-4 w-4" />
+                View Data
+              </button>
               <button
                 onClick={() => setShowImportModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -698,6 +715,41 @@ export function OTCInterface() {
           </div>
         </div>
       </div>
+      )}
+
+      {/* Welcome Panel - Show when table is not visible */}
+      {!showTable && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-white rounded-lg shadow-lg p-12 text-center">
+            <Package className="h-20 w-20 text-[#FFCD11] mx-auto mb-6" />
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">OTC Order Management</h3>
+            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+              Click <strong>"View Data"</strong> to load and display the order records, or use <strong>"Import CSV"</strong> to add new data.
+            </p>
+            <p className="text-sm text-gray-500 mb-8">
+              Data is loaded on-demand to keep the application lightweight and performant.
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => {
+                  setShowTable(true);
+                  fetchOrders();
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-lg font-medium"
+              >
+                <Package className="h-5 w-5" />
+                View Data
+              </button>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-lg font-medium"
+              >
+                <Upload className="h-5 w-5" />
+                Import CSV
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Import CSV Modal */}

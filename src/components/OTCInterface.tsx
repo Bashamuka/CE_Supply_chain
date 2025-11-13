@@ -44,67 +44,83 @@ interface OTCOrder {
 
 export function OTCInterface() {
   const [orders, setOrders] = useState<OTCOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedSuccursale, setSelectedSuccursale] = useState('all');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [showTable, setShowTable] = useState(false); // Tableau masqué par défaut - chargement à la demande
+  const [showTable, setShowTable] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<OTCOrder | null>(null);
 
-  // Fetch orders from database
-  const fetchOrders = async () => {
+  // Search orders based on criteria - only fetch when user searches
+  const searchOrders = async () => {
+    if (!searchTerm && selectedStatus === 'all' && selectedSuccursale === 'all' && !dateRange.start && !dateRange.end) {
+      alert('Veuillez entrer au moins un critère de recherche (Num CDE, Référence, Client, BL, Status, Succursale ou Date)');
+      return;
+    }
+
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('otc_orders')
         .select('*')
         .order('date_cde', { ascending: false });
 
+      // Apply search term filter
+      if (searchTerm) {
+        query = query.or(`num_cde.ilike.%${searchTerm}%,po_client.ilike.%${searchTerm}%,reference.ilike.%${searchTerm}%,designation.ilike.%${searchTerm}%,num_bl.ilike.%${searchTerm}%,num_client.ilike.%${searchTerm}%,nom_clients.ilike.%${searchTerm}%`);
+      }
+      
+      // Apply status filter
+      if (selectedStatus !== 'all') {
+        query = query.eq('status', selectedStatus);
+      }
+      
+      // Apply succursale filter
+      if (selectedSuccursale !== 'all') {
+        query = query.eq('succursale', selectedSuccursale);
+      }
+      
+      // Apply date range filters
+      if (dateRange.start) {
+        query = query.gte('date_cde', dateRange.start);
+      }
+      
+      if (dateRange.end) {
+        query = query.lte('date_cde', dateRange.end);
+      }
+
+      const { data, error } = await query;
+      
       if (error) throw error;
       setOrders(data || []);
+      setShowTable(true);
+      
+      if (data && data.length === 0) {
+        alert('Aucun résultat trouvé pour ces critères de recherche');
+      }
     } catch (error) {
-      console.error('Error fetching OTC orders:', error);
+      console.error('Error searching OTC orders:', error);
+      alert('Erreur lors de la recherche');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Ne pas charger automatiquement - attendre l'action de l'utilisateur
+    // Pas de chargement automatique - recherche uniquement
   }, []);
 
-  // Filter orders based on search criteria
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      order.num_cde.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.po_client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.num_client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.nom_clients?.toLowerCase().includes(searchTerm.toLowerCase());
+  // No client-side filtering - filtering is done server-side
+  const filteredOrders = orders;
 
-    const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
-    const matchesSuccursale = selectedSuccursale === 'all' || order.succursale === selectedSuccursale;
-    
-    const matchesDateRange = 
-      (!dateRange.start || order.date_cde >= dateRange.start) &&
-      (!dateRange.end || order.date_cde <= dateRange.end);
-
-    return matchesSearch && matchesStatus && matchesSuccursale && matchesDateRange;
-  });
-
-  // Check if there's an active search/filter
-  const hasActiveSearch = searchTerm || selectedStatus !== 'all' || selectedSuccursale !== 'all' || 
-    dateRange.start || dateRange.end;
-
-  // Get unique values for filters
-  const uniqueStatuses = [...new Set(orders.map(order => order.status))];
-  const uniqueSuccursales = [...new Set(orders.map(order => order.succursale))];
+  // Static filter values
+  const uniqueStatuses = ['Delivered', 'Pending', 'In Progress', 'Cancelled'];
+  const uniqueSuccursales = ['GDC', 'JDC', 'CAT Network', 'SUCC_10', 'SUCC_11', 'SUCC_12', 'SUCC_13', 'SUCC_14', 'SUCC_19', 'SUCC_20', 'SUCC_21', 'SUCC_22', 'SUCC_24', 'SUCC_30', 'SUCC_40', 'SUCC_50', 'SUCC_60', 'SUCC_70', 'SUCC_80', 'SUCC_90'];
 
   // Status badge component
   const StatusBadge = ({ status }: { status: string }) => {
@@ -337,11 +353,11 @@ export function OTCInterface() {
         return;
       }
 
-      alert(`${orders.length} commandes importées avec succès\n\n• Données existantes supprimées\n• Compteur ID réinitialisé à 1\n• Nouvelles données insérées\n• Dates converties du format DD/MM/YYYY vers YYYY-MM-DD`);
+      alert(`${orders.length} commandes importées avec succès\n\n• Données existantes supprimées\n• Compteur ID réinitialisé à 1\n• Nouvelles données insérées\n• Dates converties du format DD/MM/YYYY vers YYYY-MM-DD\n\nUtilisez la recherche pour afficher les données importées.`);
       setShowImportModal(false);
       setImportFile(null);
-      setShowTable(true); // Afficher le tableau après l'import
-      fetchOrders(); // Refresh the data
+      setOrders([]); // Vider les résultats
+      setShowTable(false); // Masquer le tableau
 
     } catch (error) {
       console.error('Error processing CSV:', error);
@@ -404,7 +420,8 @@ export function OTCInterface() {
       alert('Commande supprimée avec succès');
       setShowDeleteModal(false);
       setOrderToDelete(null);
-      fetchOrders(); // Refresh the data
+      // Retirer la commande des résultats actuels
+      setOrders(orders.filter(o => o.id !== orderToDelete.id));
     } catch (error) {
       console.error('Error deleting order:', error);
       alert('Erreur lors de la suppression de la commande');
@@ -448,22 +465,6 @@ export function OTCInterface() {
               <p className="text-gray-600 mt-1">Comprehensive order management and tracking</p>
             </div>
       <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowTable(true);
-                  if (orders.length === 0) {
-                    fetchOrders();
-                  }
-                }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  showTable 
-                    ? 'bg-green-700 text-white' 
-                    : 'bg-green-600 text-white hover:bg-green-700'
-                }`}
-              >
-                <Package className="h-4 w-4" />
-                View Data
-              </button>
               <button
                 onClick={() => setShowImportModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -519,22 +520,27 @@ export function OTCInterface() {
                 ))}
               </select>
 
-              {/* Clear Filters */}
+              {/* Search Button */}
               <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setSelectedStatus('all');
-                  setSelectedSuccursale('all');
-                  setDateRange({ start: '', end: '' });
-                }}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                onClick={searchOrders}
+                disabled={loading}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-[#FFCD11] text-black rounded-lg hover:bg-yellow-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
-                <XCircle className="h-4 w-4" />
-                Clear Filters
+                {loading ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Recherche...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4" />
+                    Rechercher
+                  </>
+                )}
               </button>
             </div>
 
-            {/* Second row - Date Range */}
+            {/* Second row - Date Range and Clear */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex gap-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
@@ -556,6 +562,22 @@ export function OTCInterface() {
                   onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FFCD11] focus:border-[#FFCD11]"
                 />
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedStatus('all');
+                    setSelectedSuccursale('all');
+                    setDateRange({ start: '', end: '' });
+                    setOrders([]);
+                    setShowTable(false);
+                  }}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Effacer les filtres
+                </button>
               </div>
             </div>
           </div>
@@ -721,33 +743,17 @@ export function OTCInterface() {
       {!showTable && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-            <Package className="h-20 w-20 text-[#FFCD11] mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">OTC Order Management</h3>
+            <Search className="h-20 w-20 text-[#FFCD11] mx-auto mb-6" />
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">Recherche OTC</h3>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Click <strong>"View Data"</strong> to load and display the order records, or use <strong>"Import CSV"</strong> to add new data.
+              Utilisez les <strong>filtres ci-dessus</strong> pour rechercher des commandes OTC spécifiques.
             </p>
             <p className="text-sm text-gray-500 mb-8">
-              Data is loaded on-demand to keep the application lightweight and performant.
+              Entrez au moins un critère de recherche : <strong>Num CDE</strong>, <strong>Référence</strong>, <strong>Client</strong>, <strong>Num BL</strong>, <strong>Status</strong>, <strong>Succursale</strong> ou <strong>Date</strong>.
             </p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => {
-                  setShowTable(true);
-                  fetchOrders();
-                }}
-                className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-lg font-medium"
-              >
-                <Package className="h-5 w-5" />
-                View Data
-              </button>
-              <button
-                onClick={() => setShowImportModal(true)}
-                className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-lg font-medium"
-              >
-                <Upload className="h-5 w-5" />
-                Import CSV
-              </button>
-            </div>
+            <p className="text-xs text-gray-400">
+              💡 Les données sont chargées uniquement lors de la recherche pour optimiser les performances.
+            </p>
           </div>
         </div>
       )}

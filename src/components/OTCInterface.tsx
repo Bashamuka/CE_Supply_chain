@@ -12,7 +12,6 @@ import {
   Clock,
   AlertCircle,
   XCircle,
-  BarChart3,
   Users,
   Building2,
   FileText,
@@ -43,31 +42,14 @@ interface OTCOrder {
   updated_at: string;
 }
 
-interface OTCAnalytics {
-  succursale: string;
-  total_orders: number;
-  delivered_orders: number;
-  pending_orders: number;
-  in_progress_orders: number;
-  cancelled_orders: number;
-  total_ordered_quantity: number;
-  total_delivered_quantity: number;
-  total_balance: number;
-  delivery_percentage: number;
-  earliest_order_date: string;
-  latest_order_date: string;
-}
-
 export function OTCInterface() {
   const [orders, setOrders] = useState<OTCOrder[]>([]);
-  const [analytics, setAnalytics] = useState<OTCAnalytics[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedSuccursale, setSelectedSuccursale] = useState('all');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [showAnalytics, setShowAnalytics] = useState(true); // Analytics visible par défaut
-  const [showTable, setShowTable] = useState(false); // Tableau masqué par défaut
+  const [showTable, setShowTable] = useState(true); // Tableau visible par défaut
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState(false);
@@ -92,23 +74,8 @@ export function OTCInterface() {
     }
   };
 
-  // Fetch analytics
-  const fetchAnalytics = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('v_otc_analytics')
-        .select('*');
-
-      if (error) throw error;
-      setAnalytics(data || []);
-    } catch (error) {
-      console.error('Error fetching OTC analytics:', error);
-    }
-  };
-
   useEffect(() => {
     fetchOrders();
-    fetchAnalytics();
   }, []);
 
   // Filter orders based on search criteria
@@ -374,7 +341,6 @@ export function OTCInterface() {
       setShowImportModal(false);
       setImportFile(null);
       fetchOrders(); // Refresh the data
-      fetchAnalytics();
 
     } catch (error) {
       console.error('Error processing CSV:', error);
@@ -438,7 +404,6 @@ export function OTCInterface() {
       setShowDeleteModal(false);
       setOrderToDelete(null);
       fetchOrders(); // Refresh the data
-      fetchAnalytics();
     } catch (error) {
       console.error('Error deleting order:', error);
       alert('Erreur lors de la suppression de la commande');
@@ -482,28 +447,6 @@ export function OTCInterface() {
               <p className="text-gray-600 mt-1">Comprehensive order management and tracking</p>
             </div>
       <div className="flex gap-3">
-        <button
-          onClick={() => setShowAnalytics(!showAnalytics)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-            showAnalytics 
-              ? 'bg-blue-700 text-white' 
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          <BarChart3 className="h-4 w-4" />
-          Analytics
-        </button>
-        <button
-          onClick={() => setShowTable(!showTable)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-            showTable 
-              ? 'bg-green-700 text-white' 
-              : 'bg-green-600 text-white hover:bg-green-700'
-          }`}
-        >
-          <Package className="h-4 w-4" />
-          View Data
-        </button>
               <button
                 onClick={() => setShowImportModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -516,44 +459,7 @@ export function OTCInterface() {
         </div>
       </div>
 
-      {/* Analytics Panel */}
-      {showAnalytics && (
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <h2 className="text-lg font-semibold text-[#1A1A1A] mb-4">Analytics Overview</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {analytics.map((branch) => (
-                <div key={branch.succursale} className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-[#1A1A1A]">{branch.succursale}</h3>
-                    <Building2 className="h-5 w-5 text-gray-600" />
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Orders:</span>
-                      <span className="font-medium">{branch.total_orders}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Delivered:</span>
-                      <span className="font-medium text-green-600">{branch.delivered_orders}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Pending:</span>
-                      <span className="font-medium text-yellow-600">{branch.pending_orders}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Delivery %:</span>
-                      <span className="font-medium text-blue-600">{branch.delivery_percentage}%</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Filters - Only show when table is visible */}
+      {/* Filters */}
       {showTable && (
         <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -792,22 +698,6 @@ export function OTCInterface() {
           </div>
         </div>
       </div>
-      )}
-
-      {/* Information Panel - Show when table is not visible */}
-      {!showTable && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-            <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Data Table Hidden</h3>
-            <p className="text-gray-600 mb-4">
-              The data table is currently hidden. Click "View Data" to see the order details table.
-            </p>
-            <p className="text-sm text-gray-500">
-              Only analytics are displayed by default to provide a clean overview of your OTC data.
-            </p>
-          </div>
-        </div>
       )}
 
       {/* Import CSV Modal */}

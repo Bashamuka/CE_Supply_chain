@@ -344,7 +344,7 @@ export function OTCInterface() {
 
       // Insert new orders in batches to avoid blocking the browser
       console.log(`Inserting ${orders.length} orders in batches...`);
-      const BATCH_SIZE = 100; // Taille du lot
+      const BATCH_SIZE = 1000; // Taille du lot
       let importedCount = 0;
 
       for (let i = 0; i < orders.length; i += BATCH_SIZE) {
@@ -836,7 +836,7 @@ export function OTCInterface() {
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-2 text-center">
-                    Import par lots de 100 • Ne fermez pas cette fenêtre
+                    Import par lots de 1000 • Ne fermez pas cette fenêtre
                   </p>
                 </div>
               )}

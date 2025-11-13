@@ -53,6 +53,7 @@ export function OTCInterface() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState(false);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<OTCOrder | null>(null);
 
@@ -341,27 +342,49 @@ export function OTCInterface() {
         }
       }
 
-      // Insert new orders
-      console.log('Inserting new orders...');
-      const { error } = await supabase
-        .from('otc_orders')
-        .insert(orders);
+      // Insert new orders in batches to avoid blocking the browser
+      console.log(`Inserting ${orders.length} orders in batches...`);
+      const BATCH_SIZE = 100; // Taille du lot
+      let importedCount = 0;
 
-      if (error) {
-        console.error('Error importing orders:', error);
-        alert(`Erreur lors de l'import: ${error.message}`);
-        return;
+      for (let i = 0; i < orders.length; i += BATCH_SIZE) {
+        const batch = orders.slice(i, i + BATCH_SIZE);
+        
+        // Update progress
+        setImportProgress({ current: i, total: orders.length });
+        
+        const { error } = await supabase
+          .from('otc_orders')
+          .insert(batch);
+
+        if (error) {
+          console.error(`Error importing batch ${Math.floor(i / BATCH_SIZE) + 1}:`, error);
+          alert(`Erreur lors de l'import du lot ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}\n\n${importedCount} commandes importées avant l'erreur.`);
+          setImportProgress({ current: 0, total: 0 });
+          return;
+        }
+
+        importedCount += batch.length;
+        console.log(`Batch ${Math.floor(i / BATCH_SIZE) + 1} imported: ${batch.length} orders (${importedCount}/${orders.length})`);
+        
+        // Petit délai pour laisser le navigateur respirer
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
 
-      alert(`${orders.length} commandes importées avec succès\n\n• Données existantes supprimées\n• Compteur ID réinitialisé à 1\n• Nouvelles données insérées\n• Dates converties du format DD/MM/YYYY vers YYYY-MM-DD\n\nUtilisez la recherche pour afficher les données importées.`);
+      // Final progress update
+      setImportProgress({ current: orders.length, total: orders.length });
+
+      alert(`${importedCount} commandes importées avec succès\n\n• Données existantes supprimées\n• Compteur ID réinitialisé à 1\n• ${Math.ceil(orders.length / BATCH_SIZE)} lots de ${BATCH_SIZE} commandes insérés\n• Dates converties du format DD/MM/YYYY vers YYYY-MM-DD\n\nUtilisez la recherche pour afficher les données importées.`);
       setShowImportModal(false);
       setImportFile(null);
+      setImportProgress({ current: 0, total: 0 }); // Réinitialiser la progression
       setOrders([]); // Vider les résultats
       setShowTable(false); // Masquer le tableau
 
     } catch (error) {
       console.error('Error processing CSV:', error);
       alert('Erreur lors du traitement du fichier CSV');
+      setImportProgress({ current: 0, total: 0 }); // Réinitialiser en cas d'erreur
     } finally {
       setImportLoading(false);
     }
@@ -794,6 +817,29 @@ export function OTCInterface() {
                   </p>
                 </div>
               </div>
+
+              {/* Progress Bar */}
+              {importLoading && importProgress.total > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex justify-between text-sm text-gray-700 mb-2">
+                    <span className="font-medium">Import en cours...</span>
+                    <span className="font-mono">{importProgress.current} / {importProgress.total}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div 
+                      className="bg-[#FFCD11] h-3 rounded-full transition-all duration-300 flex items-center justify-end pr-2"
+                      style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
+                    >
+                      <span className="text-xs font-bold text-black">
+                        {Math.round((importProgress.current / importProgress.total) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Import par lots de 100 • Ne fermez pas cette fenêtre
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <button

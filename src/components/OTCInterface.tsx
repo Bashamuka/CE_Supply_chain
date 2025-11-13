@@ -477,9 +477,8 @@ export function OTCInterface() {
         </div>
       </div>
 
-      {/* Filters */}
-      {showTable && (
-        <div className="bg-white shadow-sm border-b border-gray-200">
+      {/* Filters - Always visible for search */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="space-y-4">
             {/* First row - Search and basic filters */}
@@ -583,7 +582,6 @@ export function OTCInterface() {
           </div>
         </div>
       </div>
-      )}
 
       {/* Orders Table - Only show when table is visible */}
       {showTable && (
@@ -746,12 +744,15 @@ export function OTCInterface() {
             <Search className="h-20 w-20 text-[#FFCD11] mx-auto mb-6" />
             <h3 className="text-2xl font-bold text-gray-900 mb-3">Recherche OTC</h3>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Utilisez les <strong>filtres ci-dessus</strong> pour rechercher des commandes OTC spécifiques.
+              Entrez au moins un critère de recherche ci-dessus et cliquez sur <strong>"Rechercher"</strong> pour afficher les résultats.
             </p>
-            <p className="text-sm text-gray-500 mb-8">
-              Entrez au moins un critère de recherche : <strong>Num CDE</strong>, <strong>Référence</strong>, <strong>Client</strong>, <strong>Num BL</strong>, <strong>Status</strong>, <strong>Succursale</strong> ou <strong>Date</strong>.
-            </p>
-            <p className="text-xs text-gray-400">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-xl mx-auto">
+              <p className="text-sm text-blue-900 font-medium mb-2">Critères de recherche disponibles :</p>
+              <p className="text-xs text-blue-700">
+                <strong>Num CDE</strong> • <strong>Référence</strong> • <strong>Client</strong> • <strong>Num BL</strong> • <strong>Status</strong> • <strong>Succursale</strong> • <strong>Date</strong>
+              </p>
+            </div>
+            <p className="text-xs text-gray-400 mt-6">
               💡 Les données sont chargées uniquement lors de la recherche pour optimiser les performances.
             </p>
           </div>
